@@ -86,5 +86,30 @@ public class CcpDbCrudElasticSearch implements CcpDbCrud {
 		return asMapList;
 	}
 
+	@Override
+	public boolean exists(String id, String tableName) {
+		String path = "/" + tableName + "/_doc/" + id;
+		
+
+		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("404",  CcpHttpStatus.NOT_FOUND);
+		
+		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.emptyJson, CcpHttpResponseType.singleRecord);
+		CcpHttpStatus status = response.getAsObject(CcpHttpStatus.class.getSimpleName());
+		
+		boolean exists = CcpHttpStatus.OK.equals(status);
+		return exists;
+	}
 
 }
+enum CcpHttpStatus implements CcpProcess{
+	OK,
+	NOT_FOUND;
+
+
+	@Override
+	public CcpMapDecorator execute(CcpMapDecorator values) {
+		return values.put(CcpHttpStatus.class.getSimpleName(), this);
+	}
+	
+}
+
