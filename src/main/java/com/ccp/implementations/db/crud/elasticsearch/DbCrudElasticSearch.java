@@ -7,15 +7,14 @@ import java.util.stream.Collectors;
 import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.dependency.injection.CcpEspecification;
-import com.ccp.dependency.injection.CcpImplementation;
 import com.ccp.especifications.db.crud.CcpDbCrud;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.db.CcpRecordNotFound;
 import com.ccp.process.CcpProcess;
 
-@CcpImplementation
-public class CcpDbCrudElasticSearch implements CcpDbCrud {
+
+class DbCrudElasticSearch implements CcpDbCrud {
 
 	@CcpEspecification
 	private CcpDbUtils dbUtils;
@@ -98,6 +97,12 @@ public class CcpDbCrudElasticSearch implements CcpDbCrud {
 		
 		boolean exists = CcpHttpStatus.OK.equals(status);
 		return exists;
+	}
+
+	@Override
+	public boolean updateOrSave(CcpMapDecorator data, String id, String tableName) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }
