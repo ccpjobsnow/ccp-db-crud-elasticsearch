@@ -1,8 +1,8 @@
 package com.ccp.implementations.db.crud.elasticsearch;
 
-import com.ccp.dependency.injection.CcpEspecification.DefaultImplementationProvider;
+import com.ccp.dependency.injection.CcpImplementationProvider;
 
-public class ImplementationProvider extends DefaultImplementationProvider  {
+public class ImplementationProvider implements CcpImplementationProvider  {
 
 	@Override
 	public Object getImplementation() {
