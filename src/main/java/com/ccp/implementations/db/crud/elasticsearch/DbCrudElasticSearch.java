@@ -9,6 +9,7 @@ import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.dependency.injection.CcpEspecification;
 import com.ccp.especifications.db.crud.CcpDbCrud;
+import com.ccp.especifications.db.table.CcpDbTable;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.db.CcpRecordNotFound;
@@ -46,12 +47,12 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyById(String id, String... tables) {
+	public List<CcpMapDecorator> getManyById(String id, CcpDbTable... tables) {
 
 		List<CcpMapDecorator> asList = Arrays.asList(tables).stream().map(
 				table -> new CcpMapDecorator()
 				.put("_id", id)
-				.put("_index", table))
+				.put("_index", table.name()))
 				.collect(Collectors.toList());
 		
 		CcpMapDecorator requestBody = new CcpMapDecorator().put("docs", asList);
@@ -62,12 +63,12 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public CcpMapDecorator getOneById(String id, String tableName) {
+	public CcpMapDecorator getOneById(CcpDbTable tableName, String id) {
 	
 		String path = "/" + tableName + "/_doc/" + id + "/_source";
 		
 		CcpProcess throwNotFoundError =  x -> {
-			throw new CcpRecordNotFound(tableName, id);
+			throw new CcpRecordNotFound(tableName.name(), id);
 		};
 
 		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.doNothing).put("404", throwNotFoundError);
@@ -78,7 +79,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyByIds(String[] ids, String tableName) {
+	public List<CcpMapDecorator> getManyByIds(CcpDbTable tableName, String... ids) {
 	
 		List<String> asList = Arrays.asList(ids);
 		CcpMapDecorator requestBody = new CcpMapDecorator().put("ids", asList);
@@ -87,7 +88,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public boolean exists(String id, String tableName) {
+	public boolean exists(CcpDbTable tableName, String id) {
 		String path = "/" + tableName + "/_doc/" + id;
 		
 
@@ -101,13 +102,13 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public boolean updateOrSave(CcpMapDecorator data, String id, String tableName) {
+	public boolean updateOrSave(CcpMapDecorator data, CcpDbTable tableName, String id) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public Set<String> getSynonyms(Set<String> wordsToAnalyze, String tableName, String... analyzers) {
+	public Set<String> getSynonyms(Set<String> wordsToAnalyze, CcpDbTable tableName, String... analyzers) {
 		// TODO Auto-generated method stub
 		return null;
 	}
