@@ -2,6 +2,7 @@ package com.ccp.implementations.db.crud.elasticsearch;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,6 +13,7 @@ import com.ccp.especifications.db.crud.CcpDbCrud;
 import com.ccp.especifications.db.table.CcpDbTable;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.http.CcpHttpResponseType;
+import com.ccp.exceptions.commons.Flow;
 import com.ccp.exceptions.db.CcpRecordNotFound;
 import com.ccp.process.CcpProcess;
 
@@ -47,12 +49,15 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyById(String id, CcpDbTable... tables) {
+	public List<CcpMapDecorator> getManyById(CcpMapDecorator values, CcpDbTable... tables) {
 
 		List<CcpMapDecorator> asList = Arrays.asList(tables).stream().map(
-				table -> new CcpMapDecorator()
-				.put("_id", id)
-				.put("_index", table.name()))
+				table -> {
+					String id = table.getId(values, table.getTimeOption(), table.getKeys());
+					return new CcpMapDecorator()
+					.put("_id", id)
+					.put("_index", table.name());
+				})
 				.collect(Collectors.toList());
 		
 		CcpMapDecorator requestBody = new CcpMapDecorator().put("docs", asList);
@@ -111,6 +116,69 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	public Set<String> getSynonyms(Set<String> wordsToAnalyze, CcpDbTable tableName, String... analyzers) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+	
+	@Override
+	public CcpMapDecorator findById(CcpMapDecorator values, CcpMapDecorator... roadMap) {
+		CcpDbTable[]  tables = new CcpDbTable[roadMap.length];
+		int k = 0;
+		List<CcpDbTable> keySet = Arrays.asList(roadMap).stream().map(x -> (CcpDbTable) x.getAsObject("table") ).collect(Collectors.toList());
+		for (CcpDbTable ccpDbTable : keySet) {
+			tables[k++] = ccpDbTable;
+		}
+
+		List<CcpMapDecorator> manyById = this.getManyById(values, tables);
+		
+		k = 0;
+		
+		for (CcpMapDecorator dataBaseRow : manyById) {
+		
+			String tableName = dataBaseRow.getAsString("_index");
+
+			boolean found = dataBaseRow.getAsBoolean("found");
+			
+			Optional<CcpMapDecorator> findFirst = Arrays.asList(roadMap).stream()
+					.filter(x -> x.getAsString("table").equals(tableName))
+					.filter(x -> x.getAsBoolean("found") == found)
+					.findFirst();
+
+			CcpMapDecorator record = dataBaseRow.getInternalMap("_source");
+			
+			boolean hasNotSpec = findFirst.isPresent() == false;
+			
+			if(hasNotSpec) {
+				
+				if(found == false) {
+					continue;
+				}
+				
+				values = values.putSubKey("_tables", tableName, record);
+				
+				continue;
+			}
+			
+			CcpMapDecorator spec = findFirst.get();
+			
+			if(spec.containsKey("action")) {
+			
+				CcpProcess action = spec.getAsObject("action");
+
+				if(found == false) {
+					CcpMapDecorator execute = action.execute(values);
+					return execute;
+
+				}
+				
+				CcpMapDecorator context = values.putSubKey("_tables", tableName, record);
+				CcpMapDecorator execute = action.execute(context);
+				return execute;
+			}
+			
+			Integer status = spec.getAsIntegerNumber("status");
+			String message = spec.getAsString("message");
+			throw new Flow(values, status , message);
+		}
+		return values;
 	}
 
 }
