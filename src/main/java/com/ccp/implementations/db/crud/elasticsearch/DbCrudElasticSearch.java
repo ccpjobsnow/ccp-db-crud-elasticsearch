@@ -135,20 +135,20 @@ class DbCrudElasticSearch implements CcpDbCrud {
 		
 			String tableName = dataBaseRow.getAsString("_index");
 
-			boolean found = dataBaseRow.getAsBoolean("found");
+			boolean recordFound = dataBaseRow.getAsBoolean("found");
 			
 			Optional<CcpMapDecorator> findFirst = Arrays.asList(roadMap).stream()
 					.filter(x -> x.getAsString("table").equals(tableName))
-					.filter(x -> x.getAsBoolean("found") == found)
+					.filter(x -> x.getAsBoolean("found") == recordFound)
 					.findFirst();
 
 			CcpMapDecorator record = dataBaseRow.getInternalMap("_source");
 			
-			boolean hasNotSpec = findFirst.isPresent() == false;
+			boolean itWasNotForeseen = findFirst.isPresent() == false;
 			
-			if(hasNotSpec) {
-				
-				if(found == false) {
+			if(itWasNotForeseen) {
+
+				if(recordFound == false) {
 					continue;
 				}
 				
@@ -157,27 +157,36 @@ class DbCrudElasticSearch implements CcpDbCrud {
 				continue;
 			}
 			
-			CcpMapDecorator spec = findFirst.get();
+			CcpMapDecorator specification = findFirst.get();
 			
-			if(spec.containsKey("action")) {
+			boolean willNotExecuteAction = specification.containsKey("action") == false;
 			
-				CcpProcess action = spec.getAsObject("action");
-
-				if(found == false) {
-					CcpMapDecorator execute = action.execute(values);
-					return execute;
-
+			if(willNotExecuteAction) {
+			
+				boolean willNotThrowException = specification.containsKey("status") == false;
+				
+				if(willNotThrowException) {
+					continue;
 				}
 				
-				CcpMapDecorator context = values.putSubKey("_tables", tableName, record);
-				CcpMapDecorator execute = action.execute(context);
-				return execute;
+				Integer status = specification.getAsIntegerNumber("status");
+				String message = specification.getAsString("message");
+				throw new Flow(values, status , message);
 			}
 			
-			Integer status = spec.getAsIntegerNumber("status");
-			String message = spec.getAsString("message");
-			throw new Flow(values, status , message);
+			CcpProcess action = specification.getAsObject("action");
+
+			if(recordFound == false) {
+				CcpMapDecorator execute = action.execute(values);
+				return execute;
+
+			}
+			
+			CcpMapDecorator context = values.putSubKey("_tables", tableName, record);
+			CcpMapDecorator execute = action.execute(context);
+			return execute;
 		}
+		
 		return values;
 	}
 
