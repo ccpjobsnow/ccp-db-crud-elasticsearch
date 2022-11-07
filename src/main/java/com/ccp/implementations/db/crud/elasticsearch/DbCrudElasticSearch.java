@@ -181,6 +181,12 @@ class DbCrudElasticSearch implements CcpDbCrud {
 		return values;
 	}
 
+	@Override
+	public void remove(String id) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
 enum CcpHttpStatus implements CcpProcess{
 	OK,
