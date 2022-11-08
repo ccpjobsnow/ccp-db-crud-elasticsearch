@@ -122,7 +122,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	public CcpMapDecorator findById(CcpMapDecorator values, CcpMapDecorator... roadMap) {
 		CcpDbTable[]  tables = new CcpDbTable[roadMap.length];
 		int k = 0;
-		List<CcpDbTable> keySet = Arrays.asList(roadMap).stream().map(x -> (CcpDbTable) x.getAsObject("table") ).collect(Collectors.toList());
+		Set<CcpDbTable> keySet = Arrays.asList(roadMap).stream().map(x -> (CcpDbTable) x.getAsObject("table") ).collect(Collectors.toSet());
 		for (CcpDbTable ccpDbTable : keySet) {
 			tables[k++] = ccpDbTable;
 		}
