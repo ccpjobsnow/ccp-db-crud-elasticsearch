@@ -191,8 +191,9 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public void remove(String id) {
+	public CcpMapDecorator remove(String id) {
 		// TODO Auto-generated method stub
+		return null;
 		
 	}
 
