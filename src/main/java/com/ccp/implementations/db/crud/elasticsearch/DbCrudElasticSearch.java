@@ -8,19 +8,19 @@ import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
-import com.ccp.dependency.injection.CcpEspecification;
+import com.ccp.dependency.injection.CcpSpecification;
 import com.ccp.especifications.db.crud.CcpDbCrud;
 import com.ccp.especifications.db.table.CcpDbTable;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.http.CcpHttpResponseType;
-import com.ccp.exceptions.commons.Flow;
+import com.ccp.exceptions.commons.CcpFlow;
 import com.ccp.exceptions.db.CcpRecordNotFound;
 import com.ccp.process.CcpProcess;
 
 
 class DbCrudElasticSearch implements CcpDbCrud {
 
-	@CcpEspecification
+	@CcpSpecification
 	private CcpDbUtils dbUtils;
 	
 	private final CcpSourceHandler mgetHandler = new CcpSourceHandler();
@@ -76,9 +76,9 @@ class DbCrudElasticSearch implements CcpDbCrud {
 			throw new CcpRecordNotFound(tableName.name(), id);
 		};
 
-		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.doNothing).put("404", throwNotFoundError);
+		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.DO_NOTHING).put("404", throwNotFoundError);
 		
-		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.emptyJson, CcpHttpResponseType.singleRecord);
+		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		
 		return response;
 	}
@@ -99,7 +99,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 
 		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("404",  CcpHttpStatus.NOT_FOUND);
 		
-		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.emptyJson, CcpHttpResponseType.singleRecord);
+		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		CcpHttpStatus status = response.getAsObject(CcpHttpStatus.class.getSimpleName());
 		
 		boolean exists = CcpHttpStatus.OK.equals(status);
@@ -171,7 +171,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 				
 				Integer status = specification.getAsIntegerNumber("status");
 				String message = specification.getAsString("message");
-				throw new Flow(values, status , message);
+				throw new CcpFlow(values, status , message);
 			}
 			
 			CcpProcess action = specification.getAsObject("action");
@@ -179,7 +179,6 @@ class DbCrudElasticSearch implements CcpDbCrud {
 			if(recordFound == false) {
 				CcpMapDecorator execute = action.execute(values);
 				return execute;
-
 			}
 			
 			CcpMapDecorator context = values.putSubKey("_tables", tableName, record);
