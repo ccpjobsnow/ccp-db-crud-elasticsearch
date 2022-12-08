@@ -53,7 +53,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 
 		List<CcpMapDecorator> asList = Arrays.asList(tables).stream().map(
 				table -> {
-					String id = table.getId(values, table.getTimeOption(), table.getKeys());
+					String id = table.getId(values, table.getTimeOption(), table.getFields());
 					return new CcpMapDecorator()
 					.put("_id", id)
 					.put("_index", table.name());
