@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
-import com.ccp.dependency.injection.CcpSpecification;
+import com.ccp.dependency.injection.CcpDependencyInject;
 import com.ccp.especifications.db.crud.CcpDbCrud;
 import com.ccp.especifications.db.table.CcpDbTable;
 import com.ccp.especifications.db.utils.CcpDbUtils;
@@ -20,7 +20,7 @@ import com.ccp.process.CcpProcess;
 
 class DbCrudElasticSearch implements CcpDbCrud {
 
-	@CcpSpecification
+	@CcpDependencyInject
 	private CcpDbUtils dbUtils;
 	
 	private final CcpSourceHandler mgetHandler = new CcpSourceHandler();
