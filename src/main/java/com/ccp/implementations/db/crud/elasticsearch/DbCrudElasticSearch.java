@@ -16,6 +16,7 @@ import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.commons.CcpFlow;
 import com.ccp.exceptions.db.CcpRecordNotFound;
 import com.ccp.process.CcpProcess;
+import com.ccp.process.ThrowException;
 
 
 class DbCrudElasticSearch implements CcpDbCrud {
@@ -72,11 +73,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	
 		String path = "/" + tableName + "/_doc/" + id + "/_source";
 		
-		CcpProcess throwNotFoundError =  x -> {
-			throw new CcpRecordNotFound(tableName.name(), id);
-		};
-
-		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.DO_NOTHING).put("404", throwNotFoundError);
+		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.DO_NOTHING).put("404", new ThrowException(new CcpRecordNotFound(tableName.name(), id)));
 		
 		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		
