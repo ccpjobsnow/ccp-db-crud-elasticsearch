@@ -10,7 +10,7 @@ import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.dependency.injection.CcpDependencyInject;
 import com.ccp.especifications.db.crud.CcpDbCrud;
-import com.ccp.especifications.db.table.CcpDbTable;
+import com.ccp.especifications.db.utils.CcpDbTable;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.commons.CcpFlow;
