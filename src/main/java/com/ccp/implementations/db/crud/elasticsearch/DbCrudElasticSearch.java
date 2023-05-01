@@ -2,7 +2,6 @@ package com.ccp.implementations.db.crud.elasticsearch;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpConstants;
@@ -107,12 +106,6 @@ class DbCrudElasticSearch implements CcpDbCrud {
 		return false;
 	}
 
-	@Override
-	public Set<String> getSynonyms(Set<String> wordsToAnalyze, CcpDbTable tableName, String... analyzers) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
 	@Override
 	public CcpMapDecorator remove(String id) {
 		// TODO Auto-generated method stub
