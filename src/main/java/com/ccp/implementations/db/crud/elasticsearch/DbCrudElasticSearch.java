@@ -9,6 +9,8 @@ import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.dependency.injection.CcpDependencyInject;
 import com.ccp.especifications.db.crud.CcpDbCrud;
 import com.ccp.especifications.db.utils.CcpDbTable;
+import com.ccp.especifications.db.utils.CcpDbTable.TimeOption;
+import com.ccp.especifications.db.utils.CcpDbTableField;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.db.CcpRecordNotFound;
@@ -51,7 +53,9 @@ class DbCrudElasticSearch implements CcpDbCrud {
 
 		List<CcpMapDecorator> asList = Arrays.asList(tables).stream().map(
 				table -> {
-					String id = table.getId(values, table.getTimeOption(), table.getFields());
+					TimeOption timeOption = table.getTimeOption();
+					CcpDbTableField[] fields = table.getFields();
+					String id = table.getId(values, timeOption, fields);
 					return new CcpMapDecorator()
 					.put("_id", id)
 					.put("_index", table.name());
