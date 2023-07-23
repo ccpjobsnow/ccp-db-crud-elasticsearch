@@ -9,8 +9,9 @@ class CcpSourceHandler implements CcpProcess{
 		CcpMapDecorator internalMap = x.getInternalMap("_source");
 		Boolean found = x.getAsBoolean("found");
 		String id = x.getAsString("_id");
-
-		CcpMapDecorator put = internalMap.put("id", id).put("_found", found);
+		String _index = x.getAsString("_index");
+		
+		CcpMapDecorator put = internalMap.put("id", id).put("_found", found).put("_index", _index);
 		
 		return put;
 	}
