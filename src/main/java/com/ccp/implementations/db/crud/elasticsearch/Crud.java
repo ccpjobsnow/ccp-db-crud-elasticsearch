@@ -6,7 +6,7 @@ public class Crud implements CcpModuleExporter  {
 
 	@Override
 	public Object export() {
-		return new DbCrudElasticSearch();
+		return new CcpElasticSearchDao();
 	}
 
 }

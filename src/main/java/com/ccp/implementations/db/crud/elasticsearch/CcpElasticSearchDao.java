@@ -8,8 +8,8 @@ import java.util.stream.Collectors;
 import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.dependency.injection.CcpDependencyInject;
-import com.ccp.especifications.db.crud.CcpDbCrud;
-import com.ccp.especifications.db.utils.CcpDbTable;
+import com.ccp.especifications.db.crud.CcpDao;
+import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.db.CcpRecordNotFound;
@@ -17,7 +17,7 @@ import com.ccp.process.CcpProcess;
 import com.ccp.process.ThrowException;
 
 
-class DbCrudElasticSearch implements CcpDbCrud {
+class CcpElasticSearchDao implements CcpDao {
 
 	@CcpDependencyInject
 	private CcpDbUtils dbUtils;
@@ -33,7 +33,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyById(CcpMapDecorator values, CcpDbTable... tables) {
+	public List<CcpMapDecorator> getManyById(CcpMapDecorator values, CcpEntity... tables) {
 
 		List<CcpMapDecorator> asList = Arrays.asList(tables).stream().map(
 				table -> {
@@ -53,7 +53,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public CcpMapDecorator getOneById(CcpDbTable tableName, CcpMapDecorator values) {
+	public CcpMapDecorator getOneById(CcpEntity tableName, CcpMapDecorator values) {
 	
 		String id = tableName.getId(values);
 		
@@ -67,7 +67,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyByIds(CcpDbTable tableName, String... ids) {
+	public List<CcpMapDecorator> getManyByIds(CcpEntity tableName, String... ids) {
 	
 		List<String> asList = Arrays.asList(ids);
 		CcpMapDecorator requestBody = new CcpMapDecorator().put("ids", asList);
@@ -76,7 +76,7 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public boolean exists(CcpDbTable tableName, CcpMapDecorator values) {
+	public boolean exists(CcpEntity tableName, CcpMapDecorator values) {
 		String id = tableName.getId(values);
 		
 		String path = "/" + tableName + "/_doc/" + id;
@@ -91,13 +91,13 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public boolean updateOrSave(CcpDbTable tableName, CcpMapDecorator data) {
+	public boolean createOrUpdate(String tableName, CcpMapDecorator data) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public CcpMapDecorator remove(CcpDbTable tableName, CcpMapDecorator values) {
+	public CcpMapDecorator delete(CcpEntity tableName, CcpMapDecorator values) {
 		String id = tableName.getId(values);
 		System.out.println(id);
 		// TODO Auto-generated method stub
@@ -106,9 +106,9 @@ class DbCrudElasticSearch implements CcpDbCrud {
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyById(List<CcpMapDecorator> values, CcpDbTable... tables) {
+	public List<CcpMapDecorator> getManyById(List<CcpMapDecorator> values, CcpEntity... tables) {
 		List<CcpMapDecorator> docs = new ArrayList<CcpMapDecorator>();
-		for (CcpDbTable table : tables) {
+		for (CcpEntity table : tables) {
 			String tableName = table.name();
 			for (CcpMapDecorator value : values) {
 				String id = table.getId(value);
