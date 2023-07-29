@@ -91,9 +91,24 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public boolean createOrUpdate(String tableName, CcpMapDecorator data) {
-		// TODO Auto-generated method stub
-		return false;
+	public CcpMapDecorator createOrUpdate(CcpEntity tableName, CcpMapDecorator data) {
+		
+		String id = tableName.getId(data);
+
+		String path = "/" + tableName + "/_update/" + id;
+		
+		CcpMapDecorator requestBody = new CcpMapDecorator()
+				.putSubKey("script", "lang", "painless")
+				.putSubKey("script", "source", "ctx._source = params")
+				.putSubKey("script", "params", data)
+				.put("upsert", data)
+				;
+		
+		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("201",  CcpHttpStatus.CREATED);
+		
+		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "POST", handlers, requestBody, CcpHttpResponseType.singleRecord);
+		
+		return response;
 	}
 
 	@Override
@@ -128,7 +143,8 @@ class CcpElasticSearchDao implements CcpDao {
 }
 enum CcpHttpStatus implements CcpProcess{
 	OK,
-	NOT_FOUND;
+	NOT_FOUND, 
+	CREATED;
 
 
 	@Override
