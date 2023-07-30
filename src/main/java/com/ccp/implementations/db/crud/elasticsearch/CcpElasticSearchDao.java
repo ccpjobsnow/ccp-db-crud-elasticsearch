@@ -88,9 +88,9 @@ class CcpElasticSearchDao implements CcpDao {
 		
 		String path = "/" + entity + "/_doc/" + id;
 		
-		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("404",  CcpHttpStatus.NOT_FOUND);
+		CcpMapDecorator flows = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("404",  CcpHttpStatus.NOT_FOUND);
 		
-		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
+		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "HEAD", flows, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		CcpHttpStatus status = response.getAsObject(CcpHttpStatus.class.getSimpleName());
 		
 		boolean exists = CcpHttpStatus.OK.equals(status);
@@ -106,7 +106,7 @@ class CcpElasticSearchDao implements CcpDao {
 		
 		CcpMapDecorator requestBody = new CcpMapDecorator()
 				.putSubKey("script", "lang", "painless")
-				.putSubKey("script", "source", "ctx._source = params")
+				.putSubKey("script", "source", "ctx._source.putAll(params);")
 				.putSubKey("script", "params", data)
 				.put("upsert", data)
 				;
