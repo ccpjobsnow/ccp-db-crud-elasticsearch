@@ -1,4 +1,4 @@
-package com.ccp.implementations.db.crud.elasticsearch;
+package com.ccp.implementations.db.dao.elasticsearch;
 
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.process.CcpProcess;

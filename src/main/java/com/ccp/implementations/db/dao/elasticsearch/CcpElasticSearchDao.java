@@ -1,4 +1,4 @@
-package com.ccp.implementations.db.crud.elasticsearch;
+package com.ccp.implementations.db.dao.elasticsearch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -8,11 +8,12 @@ import java.util.stream.Collectors;
 import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.dependency.injection.CcpDependencyInject;
-import com.ccp.especifications.db.crud.CcpDao;
-import com.ccp.especifications.db.utils.CcpEntity;
+import com.ccp.especifications.db.dao.CcpDao;
 import com.ccp.especifications.db.utils.CcpDbUtils;
+import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.db.CcpRecordNotFound;
+import com.ccp.exceptions.db.MissingKeys;
 import com.ccp.process.CcpProcess;
 import com.ccp.process.ThrowException;
 
@@ -128,6 +129,39 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
+	public CcpMapDecorator getAllData(CcpMapDecorator values, CcpEntity... entities) {
+		List<CcpMapDecorator> docs = new ArrayList<>();
+		for (CcpEntity entity : entities) {
+			try {
+				String id = entity.getId(values);
+				CcpMapDecorator doc = new CcpMapDecorator().put("_id", id).put("_index", entity.name());
+				docs.add(doc);
+			} catch (MissingKeys e) {
+				continue;
+			}
+		}
+		
+		if(docs.isEmpty()) {
+			return new CcpMapDecorator();
+		}
+		
+		CcpMapDecorator requestBody = new CcpMapDecorator().put("docs", docs);
+		
+		List<CcpMapDecorator> results = this.extractListFromMgetResponse(requestBody);
+
+		CcpMapDecorator response = new CcpMapDecorator();
+		
+		for (CcpMapDecorator result : results) {
+			boolean notFound = result.getAsBoolean("_found") == false;
+			if(notFound) {
+				continue;
+			}
+			String entity = result.getAsString("_index");
+			response = response.put(entity, result.removeKeys("_found", "_index"));
+		}
+		return response;
+	}
+	@Override
 	public List<CcpMapDecorator> getManyById(List<CcpMapDecorator> values, CcpEntity... entities) {
 		List<CcpMapDecorator> docs = new ArrayList<CcpMapDecorator>();
 		for (CcpEntity entity : entities) {
@@ -137,14 +171,14 @@ class CcpElasticSearchDao implements CcpDao {
 				CcpMapDecorator put = new CcpMapDecorator()
 				.put("_id", id)
 				.put("_index", entidade);
-				docs.add(put);
+				docs.add(put.removeKeys("_found", "_index"));
 			}
 		}
 		CcpMapDecorator requestBody = new CcpMapDecorator().put("docs", docs);
 		
 		List<CcpMapDecorator> asMapList = this.extractListFromMgetResponse(requestBody);
-		
-		return asMapList;
+		List<CcpMapDecorator> collect = asMapList.stream().filter(x -> x.getAsBoolean("_found")).collect(Collectors.toList());
+		return collect;
 	}
 
 }

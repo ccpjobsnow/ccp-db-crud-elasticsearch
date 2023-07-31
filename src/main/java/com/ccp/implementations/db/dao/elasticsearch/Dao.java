@@ -1,8 +1,8 @@
-package com.ccp.implementations.db.crud.elasticsearch;
+package com.ccp.implementations.db.dao.elasticsearch;
 
 import com.ccp.dependency.injection.CcpModuleExporter;
 
-public class Crud implements CcpModuleExporter  {
+public class Dao implements CcpModuleExporter  {
 
 	@Override
 	public Object export() {
