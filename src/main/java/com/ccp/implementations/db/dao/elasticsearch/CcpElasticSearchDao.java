@@ -171,13 +171,13 @@ class CcpElasticSearchDao implements CcpDao {
 				CcpMapDecorator put = new CcpMapDecorator()
 				.put("_id", id)
 				.put("_index", entidade);
-				docs.add(put.removeKeys("_found", "_index"));
+				docs.add(put);
 			}
 		}
 		CcpMapDecorator requestBody = new CcpMapDecorator().put("docs", docs);
 		
 		List<CcpMapDecorator> asMapList = this.extractListFromMgetResponse(requestBody);
-		List<CcpMapDecorator> collect = asMapList.stream().filter(x -> x.getAsBoolean("_found")).collect(Collectors.toList());
+		List<CcpMapDecorator> collect = asMapList.stream().filter(x -> x.getAsBoolean("_found")).map(x -> x.removeKeys("_found", "_index")).collect(Collectors.toList());
 		return collect;
 	}
 
