@@ -14,7 +14,7 @@ import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.db.CcpRecordNotFound;
 import com.ccp.exceptions.db.MissingKeys;
-import com.ccp.process.CcpProcess;
+
 import com.ccp.process.ThrowException;
 
 
@@ -29,7 +29,7 @@ class CcpElasticSearchDao implements CcpDao {
 		CcpMapDecorator response = this.dbUtils.executeHttpRequest("/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
 		
 		List<CcpMapDecorator> docs = response.getAsMapList("docs");
-		List<CcpMapDecorator> collect = docs.stream().map(x -> this.mgetHandler.execute(x)).collect(Collectors.toList());
+		List<CcpMapDecorator> collect = docs.stream().map(x -> this.mgetHandler.apply(x)).collect(Collectors.toList());
 		return collect;
 	}
 
@@ -182,14 +182,14 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 }
-enum CcpHttpStatus implements CcpProcess{
+enum CcpHttpStatus implements  java.util.function.Function<CcpMapDecorator, CcpMapDecorator>{
 	OK,
 	NOT_FOUND, 
 	CREATED;
 
 
 	@Override
-	public CcpMapDecorator execute(CcpMapDecorator values) {
+	public CcpMapDecorator apply(CcpMapDecorator values) {
 		return values.put(CcpHttpStatus.class.getSimpleName(), this);
 	}
 	

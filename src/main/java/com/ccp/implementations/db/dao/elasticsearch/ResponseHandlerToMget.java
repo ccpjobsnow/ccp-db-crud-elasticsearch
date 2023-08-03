@@ -1,11 +1,11 @@
 package com.ccp.implementations.db.dao.elasticsearch;
 
 import com.ccp.decorators.CcpMapDecorator;
-import com.ccp.process.CcpProcess;
-class CcpSourceHandler implements CcpProcess{
+
+class CcpSourceHandler implements  java.util.function.Function<CcpMapDecorator, CcpMapDecorator>{
 
 	@Override
-	public CcpMapDecorator execute(CcpMapDecorator x) {
+	public CcpMapDecorator apply(CcpMapDecorator x) {
 		
 		CcpMapDecorator error = x.getInternalMap("error");
 		
