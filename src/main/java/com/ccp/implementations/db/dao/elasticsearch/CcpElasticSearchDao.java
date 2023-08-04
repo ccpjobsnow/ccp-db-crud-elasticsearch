@@ -12,10 +12,9 @@ import com.ccp.especifications.db.dao.CcpDao;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.http.CcpHttpResponseType;
+import com.ccp.exceptions.commons.ThrowException;
 import com.ccp.exceptions.db.CcpRecordNotFound;
 import com.ccp.exceptions.db.MissingKeys;
-
-import com.ccp.process.ThrowException;
 
 
 class CcpElasticSearchDao implements CcpDao {
