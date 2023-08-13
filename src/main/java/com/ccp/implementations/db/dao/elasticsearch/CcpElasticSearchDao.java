@@ -102,6 +102,14 @@ class CcpElasticSearchDao implements CcpDao {
 		
 		String id = entity.getId(data);
 
+		CcpMapDecorator response = this.createOrUpdate(entity, data, id);
+		
+		return response;
+	}
+
+	@Override
+	public CcpMapDecorator createOrUpdate(CcpEntity entity, CcpMapDecorator data, String id) {
+	
 		String path = "/" + entity + "/_update/" + id;
 		
 		CcpMapDecorator requestBody = new CcpMapDecorator()
@@ -114,7 +122,6 @@ class CcpElasticSearchDao implements CcpDao {
 		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("201",  CcpHttpStatus.CREATED);
 		
 		CcpMapDecorator response = this.dbUtils.executeHttpRequest(path, "POST", handlers, requestBody, CcpHttpResponseType.singleRecord);
-		
 		return response;
 	}
 
