@@ -1,11 +1,11 @@
 package com.ccp.implementations.db.dao.elasticsearch;
 
-import com.ccp.dependency.injection.CcpModuleExporter;
+import com.ccp.dependency.injection.CcpInstanceProvider;
 
-public class Dao implements CcpModuleExporter  {
+public class Dao implements CcpInstanceProvider  {
 
 	@Override
-	public Object export() {
+	public Object getInstance() {
 		return new CcpElasticSearchDao();
 	}
 

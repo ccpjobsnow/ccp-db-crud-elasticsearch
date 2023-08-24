@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
-import com.ccp.dependency.injection.CcpDependencyInject;
+import com.ccp.dependency.injection.CcpInstanceInjection;
 import com.ccp.especifications.db.dao.CcpDao;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.db.utils.CcpEntity;
@@ -19,8 +19,7 @@ import com.ccp.exceptions.db.MissingKeys;
 
 class CcpElasticSearchDao implements CcpDao {
 
-	@CcpDependencyInject
-	private CcpDbUtils dbUtils;
+	private CcpDbUtils dbUtils = CcpInstanceInjection.getInstance(CcpDbUtils.class);
 	
 	private final CcpSourceHandler mgetHandler = new CcpSourceHandler();
 
