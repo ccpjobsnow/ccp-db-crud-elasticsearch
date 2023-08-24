@@ -10,7 +10,7 @@ import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.dependency.injection.CcpInstanceInjection;
 import com.ccp.especifications.db.dao.CcpDao;
 import com.ccp.especifications.db.utils.CcpDbUtils;
-import com.ccp.especifications.db.utils.CcpEntity;
+import com.ccp.especifications.db.utils.CcpIdGenerator;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.commons.ThrowException;
 import com.ccp.exceptions.db.CcpRecordNotFound;
@@ -32,7 +32,7 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyById(CcpMapDecorator values, CcpEntity... entities) {
+	public List<CcpMapDecorator> getManyById(CcpMapDecorator values, CcpIdGenerator... entities) {
 
 		List<CcpMapDecorator> asList = Arrays.asList(entities).stream().map(
 				entity -> {
@@ -52,7 +52,7 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public CcpMapDecorator getOneById(CcpEntity entity, CcpMapDecorator values) {
+	public CcpMapDecorator getOneById(CcpIdGenerator entity, CcpMapDecorator values) {
 	
 		String id = entity.getId(values);
 		
@@ -62,7 +62,7 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public CcpMapDecorator getOneById(CcpEntity entity, String id) {
+	public CcpMapDecorator getOneById(CcpIdGenerator entity, String id) {
 		String path = "/" + entity + "/_doc/" + id + "/_source";
 		
 		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.DO_NOTHING).put("404", new ThrowException(new CcpRecordNotFound(entity.name(), id)));
@@ -73,7 +73,7 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyByIds(CcpEntity entity, String... ids) {
+	public List<CcpMapDecorator> getManyByIds(CcpIdGenerator entity, String... ids) {
 	
 		List<String> asList = Arrays.asList(ids);
 		CcpMapDecorator requestBody = new CcpMapDecorator().put("ids", asList);
@@ -82,7 +82,7 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public boolean exists(CcpEntity entity, CcpMapDecorator values) {
+	public boolean exists(CcpIdGenerator entity, CcpMapDecorator values) {
 		String id = entity.getId(values);
 		
 		String path = "/" + entity + "/_doc/" + id;
@@ -97,7 +97,7 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public CcpMapDecorator createOrUpdate(CcpEntity entity, CcpMapDecorator data) {
+	public CcpMapDecorator createOrUpdate(CcpIdGenerator entity, CcpMapDecorator data) {
 		
 		String id = entity.getId(data);
 
@@ -107,7 +107,7 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public CcpMapDecorator createOrUpdate(CcpEntity entity, CcpMapDecorator data, String id) {
+	public CcpMapDecorator createOrUpdate(CcpIdGenerator entity, CcpMapDecorator data, String id) {
 	
 		String path = "/" + entity + "/_update/" + id;
 		
@@ -125,7 +125,7 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public CcpMapDecorator delete(CcpEntity entity, CcpMapDecorator values) {
+	public CcpMapDecorator delete(CcpIdGenerator entity, CcpMapDecorator values) {
 		String id = entity.getId(values);
 		System.out.println(id);
 		// TODO Auto-generated method stub
@@ -134,9 +134,9 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public CcpMapDecorator getAllData(CcpMapDecorator values, CcpEntity... entities) {
+	public CcpMapDecorator getAllData(CcpMapDecorator values, CcpIdGenerator... entities) {
 		List<CcpMapDecorator> docs = new ArrayList<>();
-		for (CcpEntity entity : entities) {
+		for (CcpIdGenerator entity : entities) {
 			try {
 				String id = entity.getId(values);
 				CcpMapDecorator doc = new CcpMapDecorator().put("_id", id).put("_index", entity.name());
@@ -167,9 +167,9 @@ class CcpElasticSearchDao implements CcpDao {
 		return response;
 	}
 	@Override
-	public List<CcpMapDecorator> getManyById(List<CcpMapDecorator> values, CcpEntity... entities) {
+	public List<CcpMapDecorator> getManyById(List<CcpMapDecorator> values, CcpIdGenerator... entities) {
 		List<CcpMapDecorator> docs = new ArrayList<CcpMapDecorator>();
-		for (CcpEntity entity : entities) {
+		for (CcpIdGenerator entity : entities) {
 			String entidade = entity.name();
 			for (CcpMapDecorator value : values) {
 				String id = entity.getId(value);
