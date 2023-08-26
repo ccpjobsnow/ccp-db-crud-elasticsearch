@@ -111,14 +111,14 @@ class CcpElasticSearchDao implements CcpDao {
 
 	@Override
 	public CcpMapDecorator createOrUpdate(CcpIdGenerator entity, CcpMapDecorator data, String id) {
-	
+		CcpMapDecorator onlyExistingFields = entity.getOnlyExistingFields(data);
 		String path = "/" + entity + "/_update/" + id;
 		
 		CcpMapDecorator requestBody = new CcpMapDecorator()
 				.putSubKey("script", "lang", "painless")
 				.putSubKey("script", "source", "ctx._source.putAll(params);")
-				.putSubKey("script", "params", data)
-				.put("upsert", data)
+				.putSubKey("script", "params", onlyExistingFields)
+				.put("upsert", onlyExistingFields)
 				;
 		
 		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("201",  CcpHttpStatus.CREATED);
