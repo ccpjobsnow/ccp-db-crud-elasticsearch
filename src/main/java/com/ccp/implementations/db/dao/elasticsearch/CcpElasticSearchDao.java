@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
+import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.dependency.injection.CcpInstanceInjection;
 import com.ccp.especifications.db.dao.CcpDao;
 import com.ccp.especifications.db.utils.CcpDbUtils;
@@ -121,7 +122,14 @@ class CcpElasticSearchDao implements CcpDao {
 				.put("upsert", onlyExistingFields)
 				;
 		
-		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("201",  CcpHttpStatus.CREATED);
+		CcpMapDecorator handlers = new CcpMapDecorator()
+				.put("201",  CcpHttpStatus.CREATED)
+				.put("200", CcpHttpStatus.OK)
+				.put("409", values -> {
+						new CcpTimeDecorator().sleep(1000);
+						return this.createOrUpdate(entity, data, id);
+				})
+				;
 		
 		CcpDbUtils dbUtils = CcpInstanceInjection.getInstance(CcpDbUtils.class);
 		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "POST", handlers, requestBody, CcpHttpResponseType.singleRecord);
