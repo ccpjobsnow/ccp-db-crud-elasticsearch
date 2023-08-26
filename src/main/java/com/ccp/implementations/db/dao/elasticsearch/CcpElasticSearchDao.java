@@ -123,17 +123,19 @@ class CcpElasticSearchDao implements CcpDao {
 				;
 		
 		CcpMapDecorator handlers = new CcpMapDecorator()
+				.put("409", values -> this.retryCreateOrUpdate(entity, data, id))
 				.put("201",  CcpHttpStatus.CREATED)
 				.put("200", CcpHttpStatus.OK)
-				.put("409", values -> {
-						new CcpTimeDecorator().sleep(1000);
-						return this.createOrUpdate(entity, data, id);
-				})
 				;
 		
 		CcpDbUtils dbUtils = CcpInstanceInjection.getInstance(CcpDbUtils.class);
 		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "POST", handlers, requestBody, CcpHttpResponseType.singleRecord);
 		return response;
+	}
+
+	private CcpMapDecorator retryCreateOrUpdate(CcpIdGenerator entity, CcpMapDecorator data, String id) {
+		new CcpTimeDecorator().sleep(1000);
+		return this.createOrUpdate(entity, data, id);
 	}
 
 	@Override
