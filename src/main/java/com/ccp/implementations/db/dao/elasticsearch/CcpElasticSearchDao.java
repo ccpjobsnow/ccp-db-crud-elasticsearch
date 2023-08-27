@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.decorators.CcpTimeDecorator;
-import com.ccp.dependency.injection.CcpInstanceInjection;
+import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.dao.CcpDao;
 import com.ccp.especifications.db.utils.CcpDbUtils;
 import com.ccp.especifications.db.utils.CcpIdGenerator;
@@ -25,7 +25,7 @@ class CcpElasticSearchDao implements CcpDao {
 
 	private List<CcpMapDecorator> extractListFromMgetResponse(CcpMapDecorator requestBody) {
 	
-		CcpDbUtils dbUtils = CcpInstanceInjection.getInstance(CcpDbUtils.class);
+		CcpDbUtils dbUtils = CcpDependencyInjection.getDependency(CcpDbUtils.class);
 		CcpMapDecorator response = dbUtils.executeHttpRequest("/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
 		
 		List<CcpMapDecorator> docs = response.getAsMapList("docs");
@@ -69,7 +69,7 @@ class CcpElasticSearchDao implements CcpDao {
 		
 		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.DO_NOTHING).put("404", new ThrowException(new CcpRecordNotFound(entity.name(), id)));
 		
-		CcpDbUtils dbUtils = CcpInstanceInjection.getInstance(CcpDbUtils.class);
+		CcpDbUtils dbUtils = CcpDependencyInjection.getDependency(CcpDbUtils.class);
 		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		
 		return response;
@@ -88,11 +88,17 @@ class CcpElasticSearchDao implements CcpDao {
 	public boolean exists(CcpIdGenerator entity, CcpMapDecorator values) {
 		String id = entity.getId(values);
 		
+		boolean exists = this.exists(entity, id);
+		return exists;
+	}
+
+	@Override
+	public boolean exists(CcpIdGenerator entity, String id) {
 		String path = "/" + entity + "/_doc/" + id;
 		
 		CcpMapDecorator flows = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("404",  CcpHttpStatus.NOT_FOUND);
 		
-		CcpDbUtils dbUtils = CcpInstanceInjection.getInstance(CcpDbUtils.class);
+		CcpDbUtils dbUtils = CcpDependencyInjection.getDependency(CcpDbUtils.class);
 		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "HEAD", flows, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		CcpHttpStatus status = response.getAsObject(CcpHttpStatus.class.getSimpleName());
 		
@@ -128,7 +134,7 @@ class CcpElasticSearchDao implements CcpDao {
 				.put("200", CcpHttpStatus.OK)
 				;
 		
-		CcpDbUtils dbUtils = CcpInstanceInjection.getInstance(CcpDbUtils.class);
+		CcpDbUtils dbUtils = CcpDependencyInjection.getDependency(CcpDbUtils.class);
 		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "POST", handlers, requestBody, CcpHttpResponseType.singleRecord);
 		return response;
 	}
