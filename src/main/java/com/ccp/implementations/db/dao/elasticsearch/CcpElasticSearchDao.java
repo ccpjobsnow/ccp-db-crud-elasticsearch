@@ -17,10 +17,8 @@ import com.ccp.exceptions.commons.ThrowException;
 import com.ccp.exceptions.db.CcpRecordNotFound;
 import com.ccp.exceptions.db.MissingKeys;
 
-
 class CcpElasticSearchDao implements CcpDao {
 
-	
 	private final CcpSourceHandler mgetHandler = new CcpSourceHandler();
 
 	private List<CcpMapDecorator> extractListFromMgetResponse(CcpMapDecorator requestBody) {
@@ -85,14 +83,6 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public boolean exists(CcpIdGenerator entity, CcpMapDecorator values) {
-		String id = entity.getId(values);
-		
-		boolean exists = this.exists(entity, id);
-		return exists;
-	}
-
-	@Override
 	public boolean exists(CcpIdGenerator entity, String id) {
 		String path = "/" + entity + "/_doc/" + id;
 		
@@ -104,16 +94,6 @@ class CcpElasticSearchDao implements CcpDao {
 		
 		boolean exists = CcpHttpStatus.OK.equals(status);
 		return exists;
-	}
-
-	@Override
-	public CcpMapDecorator createOrUpdate(CcpIdGenerator entity, CcpMapDecorator data) {
-		
-		String id = entity.getId(data);
-
-		CcpMapDecorator response = this.createOrUpdate(entity, data, id);
-		
-		return response;
 	}
 
 	@Override
@@ -145,12 +125,14 @@ class CcpElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public CcpMapDecorator delete(CcpIdGenerator entity, CcpMapDecorator values) {
-		String id = entity.getId(values);
-		System.out.println(id);
-		// TODO Auto-generated method stub
-		return null;
-		
+	public boolean delete(CcpIdGenerator entity, String id) {
+		String path = "/" + entity + "/_doc/" + id;
+		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.DO_NOTHING).put("404", CcpConstants.DO_NOTHING);
+		CcpDbUtils dbUtils = CcpDependencyInjection.getDependency(CcpDbUtils.class);
+		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "DELETE", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
+		String result = response.getAsString("result");
+		boolean found = "deleted".equals( result);
+		return found;
 	}
 
 	@Override
