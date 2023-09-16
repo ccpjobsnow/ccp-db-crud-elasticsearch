@@ -2,7 +2,7 @@ package com.ccp.implementations.db.dao.elasticsearch;
 
 import com.ccp.decorators.CcpMapDecorator;
 
-class CcpSourceHandler implements  java.util.function.Function<CcpMapDecorator, CcpMapDecorator>{
+class SourceHandler implements  java.util.function.Function<CcpMapDecorator, CcpMapDecorator>{
 
 	@Override
 	public CcpMapDecorator apply(CcpMapDecorator x) {
