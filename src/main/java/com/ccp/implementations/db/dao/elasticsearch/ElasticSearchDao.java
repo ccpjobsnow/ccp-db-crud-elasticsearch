@@ -137,6 +137,31 @@ class ElasticSearchDao implements CcpDao {
 
 	@Override
 	public CcpMapDecorator getAllData(CcpMapDecorator values, CcpEntityIdGenerator... entities) {
+		
+		CcpMapDecorator requestBody = this.getRequestBody(values, entities);
+		
+		List<CcpMapDecorator> results = this.extractListFromMgetResponse(requestBody);
+
+		CcpMapDecorator response = this.extractResponse(results);
+
+		return response;
+	}
+
+	private CcpMapDecorator extractResponse(List<CcpMapDecorator> results) {
+		CcpMapDecorator response = new CcpMapDecorator();
+		
+		for (CcpMapDecorator result : results) {
+			boolean notFound = result.getAsBoolean("_found") == false;
+			if(notFound) {
+				continue;
+			}
+			String entity = result.getAsString("_index");
+			response = response.put(entity, result.removeKeys("_found", "_index"));
+		}
+		return response;
+	}
+
+	private CcpMapDecorator getRequestBody(CcpMapDecorator values, CcpEntityIdGenerator... entities) {
 		List<CcpMapDecorator> docs = new ArrayList<>();
 		for (CcpEntityIdGenerator entity : entities) {
 			try {
@@ -153,20 +178,7 @@ class ElasticSearchDao implements CcpDao {
 		}
 		
 		CcpMapDecorator requestBody = new CcpMapDecorator().put("docs", docs);
-		
-		List<CcpMapDecorator> results = this.extractListFromMgetResponse(requestBody);
-
-		CcpMapDecorator response = new CcpMapDecorator();
-		
-		for (CcpMapDecorator result : results) {
-			boolean notFound = result.getAsBoolean("_found") == false;
-			if(notFound) {
-				continue;
-			}
-			String entity = result.getAsString("_index");
-			response = response.put(entity, result.removeKeys("_found", "_index"));
-		}
-		return response;
+		return requestBody;
 	}
 	@Override
 	public List<CcpMapDecorator> getManyById(List<CcpMapDecorator> values, CcpEntityIdGenerator... entities) {
