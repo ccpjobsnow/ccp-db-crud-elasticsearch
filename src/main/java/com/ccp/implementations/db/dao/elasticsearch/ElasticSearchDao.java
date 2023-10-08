@@ -63,7 +63,7 @@ class ElasticSearchDao implements CcpDao {
 
 	@Override
 	public CcpMapDecorator getOneById(CcpEntityIdGenerator entity, String id) {
-		String path = "/" + entity + "/_doc/" + id + "/_source";
+		String path = "/" + entity + "/_source/" + id ;
 		
 		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.DO_NOTHING).put("404", new CcpThrowException(new CcpEntityRecordNotFound(entity.name(), id)));
 		
