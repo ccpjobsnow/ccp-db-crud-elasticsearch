@@ -1,13 +1,13 @@
 package com.ccp.implementations.db.dao.elasticsearch;
 
-import com.ccp.decorators.CcpMapDecorator;
+import com.ccp.decorators.CcpJsonRepresentation;
 
-class SourceHandler implements  java.util.function.Function<CcpMapDecorator, CcpMapDecorator>{
+class SourceHandler implements  java.util.function.Function<CcpJsonRepresentation, CcpJsonRepresentation>{
 
 	@Override
-	public CcpMapDecorator apply(CcpMapDecorator x) {
+	public CcpJsonRepresentation apply(CcpJsonRepresentation x) {
 		
-		CcpMapDecorator error = x.getInternalMap("error");
+		CcpJsonRepresentation error = x.getInnerJson("error");
 		
 		boolean hasError = error.isEmpty() == false;
 		
@@ -17,11 +17,11 @@ class SourceHandler implements  java.util.function.Function<CcpMapDecorator, Ccp
 			throw new RuntimeException(errorType + ". Reason: " + reason);
 		}
 
-		CcpMapDecorator internalMap = x.getInternalMap("_source");
+		CcpJsonRepresentation internalMap = x.getInnerJson("_source");
 		Boolean found = x.getAsBoolean("found");
 		String id = x.getAsString("_id");
 		String _index = x.getAsString("_index");
-		CcpMapDecorator put = internalMap.put("id", id).put("_found", found).put("_index", _index);
+		CcpJsonRepresentation put = internalMap.put("id", id).put("_found", found).put("_index", _index);
 		
 		return put;
 	}

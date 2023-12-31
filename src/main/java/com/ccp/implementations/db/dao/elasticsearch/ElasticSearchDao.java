@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpConstants;
-import com.ccp.decorators.CcpMapDecorator;
+import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.dao.CcpDao;
@@ -21,64 +21,64 @@ class ElasticSearchDao implements CcpDao {
 
 	private final SourceHandler mgetHandler = new SourceHandler();
 
-	private List<CcpMapDecorator> extractListFromMgetResponse(CcpMapDecorator requestBody) {
+	private List<CcpJsonRepresentation> extractListFromMgetResponse(CcpJsonRepresentation requestBody) {
 	
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpMapDecorator response = dbUtils.executeHttpRequest("/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest("/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
 		
-		List<CcpMapDecorator> docs = response.getAsMapList("docs");
-		List<CcpMapDecorator> collect = docs.stream().map(x -> this.mgetHandler.apply(x)).collect(Collectors.toList());
+		List<CcpJsonRepresentation> docs = response.getJsonList("docs");
+		List<CcpJsonRepresentation> collect = docs.stream().map(x -> this.mgetHandler.apply(x)).collect(Collectors.toList());
 		return collect;
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyById(CcpMapDecorator values, CcpEntityIdGenerator... entities) {
+	public List<CcpJsonRepresentation> getManyById(CcpJsonRepresentation values, CcpEntityIdGenerator... entities) {
 
-		List<CcpMapDecorator> asList = Arrays.asList(entities).stream().map(
+		List<CcpJsonRepresentation> asList = Arrays.asList(entities).stream().map(
 				entity -> {
 					String id = entity.getId(values);
 					String entidade = entity.name();
-					return new CcpMapDecorator()
+					return CcpConstants.EMPTY_JSON
 					.put("_id", id)
 					.put("_index", entidade);
 				})
 				.collect(Collectors.toList());
 		
-		CcpMapDecorator requestBody = new CcpMapDecorator().put("docs", asList);
+		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", asList);
 		
-		List<CcpMapDecorator> asMapList = this.extractListFromMgetResponse(requestBody);
+		List<CcpJsonRepresentation> asMapList = this.extractListFromMgetResponse(requestBody);
 		
 		return asMapList;
 	}
 
 	@Override
-	public CcpMapDecorator getOneById(CcpEntityIdGenerator entity, CcpMapDecorator values) {
+	public CcpJsonRepresentation getOneById(CcpEntityIdGenerator entity, CcpJsonRepresentation values) {
 	
 		String id = entity.getId(values);
 		
-		CcpMapDecorator oneById = this.getOneById(entity, id);
+		CcpJsonRepresentation oneById = this.getOneById(entity, id);
 		
 		return oneById;
 	}
 
 	@Override
-	public CcpMapDecorator getOneById(CcpEntityIdGenerator entity, String id) {
+	public CcpJsonRepresentation getOneById(CcpEntityIdGenerator entity, String id) {
 		String path = "/" + entity + "/_source/" + id ;
 		
-		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.DO_NOTHING).put("404", new CcpThrowException(new CcpEntityRecordNotFound(entity.name(), id)));
+		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_NOTHING).put("404", new CcpThrowException(new CcpEntityRecordNotFound(entity.name(), id)));
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest(path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		
 		return response;
 	}
 
 	@Override
-	public List<CcpMapDecorator> getManyByIds(CcpEntityIdGenerator entity, String... ids) {
+	public List<CcpJsonRepresentation> getManyByIds(CcpEntityIdGenerator entity, String... ids) {
 	
 		List<String> asList = Arrays.asList(ids);
-		CcpMapDecorator requestBody = new CcpMapDecorator().put("ids", asList);
-		List<CcpMapDecorator> asMapList = this.extractListFromMgetResponse(requestBody);
+		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("ids", asList);
+		List<CcpJsonRepresentation> asMapList = this.extractListFromMgetResponse(requestBody);
 		return asMapList;
 	}
 
@@ -86,10 +86,10 @@ class ElasticSearchDao implements CcpDao {
 	public boolean exists(CcpEntityIdGenerator entity, String id) {
 		String path = "/" + entity + "/_doc/" + id;
 		
-		CcpMapDecorator flows = new CcpMapDecorator().put("200", CcpHttpStatus.OK).put("404",  CcpHttpStatus.NOT_FOUND);
+		CcpJsonRepresentation flows = CcpConstants.EMPTY_JSON.put("200", CcpHttpStatus.OK).put("404",  CcpHttpStatus.NOT_FOUND);
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "HEAD", flows, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest(path, "HEAD", flows, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		CcpHttpStatus status = response.getAsObject(CcpHttpStatus.class.getSimpleName());
 		
 		boolean exists = CcpHttpStatus.OK.equals(status);
@@ -97,29 +97,29 @@ class ElasticSearchDao implements CcpDao {
 	}
 
 	@Override
-	public CcpMapDecorator createOrUpdate(CcpEntityIdGenerator entity, CcpMapDecorator data, String id) {
-		CcpMapDecorator onlyExistingFields = entity.getOnlyExistingFields(data);
+	public CcpJsonRepresentation createOrUpdate(CcpEntityIdGenerator entity, CcpJsonRepresentation data, String id) {
+		CcpJsonRepresentation onlyExistingFields = entity.getOnlyExistingFields(data);
 		String path = "/" + entity + "/_update/" + id;
 		
-		CcpMapDecorator requestBody = new CcpMapDecorator()
+		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON
 				.putSubKey("script", "lang", "painless")
 				.putSubKey("script", "source", "ctx._source.putAll(params);")
 				.putSubKey("script", "params", onlyExistingFields)
 				.put("upsert", onlyExistingFields)
 				;
 		
-		CcpMapDecorator handlers = new CcpMapDecorator()
+		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON
 				.put("409", values -> this.retryCreateOrUpdate(entity, data, id))
 				.put("201",  CcpHttpStatus.CREATED)
 				.put("200", CcpHttpStatus.OK)
 				;
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "POST", handlers, requestBody, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest(path, "POST", handlers, requestBody, CcpHttpResponseType.singleRecord);
 		return response;
 	}
 
-	private CcpMapDecorator retryCreateOrUpdate(CcpEntityIdGenerator entity, CcpMapDecorator data, String id) {
+	private CcpJsonRepresentation retryCreateOrUpdate(CcpEntityIdGenerator entity, CcpJsonRepresentation data, String id) {
 		new CcpTimeDecorator().sleep(1000);
 		return this.createOrUpdate(entity, data, id);
 	}
@@ -127,30 +127,30 @@ class ElasticSearchDao implements CcpDao {
 	@Override
 	public boolean delete(CcpEntityIdGenerator entity, String id) {
 		String path = "/" + entity + "/_doc/" + id;
-		CcpMapDecorator handlers = new CcpMapDecorator().put("200", CcpConstants.DO_NOTHING).put("404", CcpConstants.DO_NOTHING);
+		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_NOTHING).put("404", CcpConstants.DO_NOTHING);
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpMapDecorator response = dbUtils.executeHttpRequest(path, "DELETE", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest(path, "DELETE", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		String result = response.getAsString("result");
 		boolean found = "deleted".equals( result);
 		return found;
 	}
 
 	@Override
-	public CcpMapDecorator getAllData(CcpMapDecorator values, CcpEntityIdGenerator... entities) {
+	public CcpJsonRepresentation getAllData(CcpJsonRepresentation values, CcpEntityIdGenerator... entities) {
 		
-		CcpMapDecorator requestBody = this.getRequestBody(values, entities);
+		CcpJsonRepresentation requestBody = this.getRequestBody(values, entities);
 		
-		List<CcpMapDecorator> results = this.extractListFromMgetResponse(requestBody);
+		List<CcpJsonRepresentation> results = this.extractListFromMgetResponse(requestBody);
 
-		CcpMapDecorator response = this.extractResponse(results);
+		CcpJsonRepresentation response = this.extractResponse(results);
 
 		return response;
 	}
 
-	private CcpMapDecorator extractResponse(List<CcpMapDecorator> results) {
-		CcpMapDecorator response = new CcpMapDecorator();
+	private CcpJsonRepresentation extractResponse(List<CcpJsonRepresentation> results) {
+		CcpJsonRepresentation response = CcpConstants.EMPTY_JSON;
 		
-		for (CcpMapDecorator result : results) {
+		for (CcpJsonRepresentation result : results) {
 			boolean notFound = result.getAsBoolean("_found") == false;
 			if(notFound) {
 				continue;
@@ -161,12 +161,12 @@ class ElasticSearchDao implements CcpDao {
 		return response;
 	}
 
-	private CcpMapDecorator getRequestBody(CcpMapDecorator values, CcpEntityIdGenerator... entities) {
-		List<CcpMapDecorator> docs = new ArrayList<>();
+	private CcpJsonRepresentation getRequestBody(CcpJsonRepresentation values, CcpEntityIdGenerator... entities) {
+		List<CcpJsonRepresentation> docs = new ArrayList<>();
 		for (CcpEntityIdGenerator entity : entities) {
 			try {
 				String id = entity.getId(values);
-				CcpMapDecorator doc = new CcpMapDecorator().put("_id", id).put("_index", entity.name());
+				CcpJsonRepresentation doc = CcpConstants.EMPTY_JSON.put("_id", id).put("_index", entity.name());
 				docs.add(doc);
 			} catch (CcpEntityMissingKeys e) {
 				continue;
@@ -174,41 +174,41 @@ class ElasticSearchDao implements CcpDao {
 		}
 		
 		if(docs.isEmpty()) {
-			return new CcpMapDecorator();
+			return CcpConstants.EMPTY_JSON;
 		}
 		
-		CcpMapDecorator requestBody = new CcpMapDecorator().put("docs", docs);
+		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs);
 		return requestBody;
 	}
 	@Override
-	public List<CcpMapDecorator> getManyById(List<CcpMapDecorator> values, CcpEntityIdGenerator... entities) {
-		List<CcpMapDecorator> docs = new ArrayList<CcpMapDecorator>();
+	public List<CcpJsonRepresentation> getManyById(List<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {
+		List<CcpJsonRepresentation> docs = new ArrayList<CcpJsonRepresentation>();
 		for (CcpEntityIdGenerator entity : entities) {
 			String entidade = entity.name();
-			for (CcpMapDecorator value : values) {
+			for (CcpJsonRepresentation value : values) {
 				String id = entity.getId(value);
-				CcpMapDecorator put = new CcpMapDecorator()
+				CcpJsonRepresentation put = CcpConstants.EMPTY_JSON
 				.put("_id", id)
 				.put("_index", entidade);
 				docs.add(put);
 			}
 		}
-		CcpMapDecorator requestBody = new CcpMapDecorator().put("docs", docs);
+		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs);
 		
-		List<CcpMapDecorator> asMapList = this.extractListFromMgetResponse(requestBody);
-		List<CcpMapDecorator> collect = asMapList.stream().filter(x -> x.getAsBoolean("_found")).map(x -> x.removeKeys("_found", "_index")).collect(Collectors.toList());
+		List<CcpJsonRepresentation> asMapList = this.extractListFromMgetResponse(requestBody);
+		List<CcpJsonRepresentation> collect = asMapList.stream().filter(x -> x.getAsBoolean("_found")).map(x -> x.removeKeys("_found", "_index")).collect(Collectors.toList());
 		return collect;
 	}
 
 }
-enum CcpHttpStatus implements  java.util.function.Function<CcpMapDecorator, CcpMapDecorator>{
+enum CcpHttpStatus implements  java.util.function.Function<CcpJsonRepresentation, CcpJsonRepresentation>{
 	OK,
 	NOT_FOUND, 
 	CREATED;
 
 
 	@Override
-	public CcpMapDecorator apply(CcpMapDecorator values) {
+	public CcpJsonRepresentation apply(CcpJsonRepresentation values) {
 		return values.put(CcpHttpStatus.class.getSimpleName(), this);
 	}
 	
