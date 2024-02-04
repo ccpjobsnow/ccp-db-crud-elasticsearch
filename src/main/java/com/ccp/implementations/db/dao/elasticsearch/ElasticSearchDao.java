@@ -31,7 +31,7 @@ class ElasticSearchDao implements CcpDao {
 		return collect;
 	}
 
-	@Override
+	
 	public List<CcpJsonRepresentation> getManyById(CcpJsonRepresentation values, CcpEntityIdGenerator... entities) {
 
 		List<CcpJsonRepresentation> asList = Arrays.asList(entities).stream().map(
@@ -51,7 +51,7 @@ class ElasticSearchDao implements CcpDao {
 		return asMapList;
 	}
 
-	@Override
+	
 	public CcpJsonRepresentation getOneById(CcpEntityIdGenerator entity, CcpJsonRepresentation values) {
 	
 		String id = entity.getId(values);
@@ -61,7 +61,7 @@ class ElasticSearchDao implements CcpDao {
 		return oneById;
 	}
 
-	@Override
+	
 	public CcpJsonRepresentation getOneById(CcpEntityIdGenerator entity, String id) {
 		String path = "/" + entity + "/_source/" + id ;
 		
@@ -73,7 +73,7 @@ class ElasticSearchDao implements CcpDao {
 		return response;
 	}
 
-	@Override
+	
 	public List<CcpJsonRepresentation> getManyByIds(CcpEntityIdGenerator entity, String... ids) {
 	
 		List<String> asList = Arrays.asList(ids);
@@ -82,7 +82,7 @@ class ElasticSearchDao implements CcpDao {
 		return asMapList;
 	}
 
-	@Override
+	
 	public boolean exists(CcpEntityIdGenerator entity, String id) {
 		String path = "/" + entity + "/_doc/" + id;
 		
@@ -96,7 +96,7 @@ class ElasticSearchDao implements CcpDao {
 		return exists;
 	}
 
-	@Override
+	
 	public CcpJsonRepresentation createOrUpdate(CcpEntityIdGenerator entity, CcpJsonRepresentation data, String id) {
 		CcpJsonRepresentation onlyExistingFields = entity.getOnlyExistingFields(data);
 		String path = "/" + entity + "/_update/" + id;
@@ -124,7 +124,7 @@ class ElasticSearchDao implements CcpDao {
 		return this.createOrUpdate(entity, data, id);
 	}
 
-	@Override
+	
 	public boolean delete(CcpEntityIdGenerator entity, String id) {
 		String path = "/" + entity + "/_doc/" + id;
 		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_NOTHING).put("404", CcpConstants.DO_NOTHING);
@@ -135,7 +135,7 @@ class ElasticSearchDao implements CcpDao {
 		return found;
 	}
 
-	@Override
+	
 	public CcpJsonRepresentation getAllData(CcpJsonRepresentation values, CcpEntityIdGenerator... entities) {
 		
 		CcpJsonRepresentation requestBody = this.getRequestBody(values, entities);
@@ -180,7 +180,7 @@ class ElasticSearchDao implements CcpDao {
 		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs);
 		return requestBody;
 	}
-	@Override
+	
 	public List<CcpJsonRepresentation> getManyById(List<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {
 		List<CcpJsonRepresentation> docs = new ArrayList<CcpJsonRepresentation>();
 		for (CcpEntityIdGenerator entity : entities) {
@@ -207,7 +207,7 @@ enum CcpHttpStatus implements  java.util.function.Function<CcpJsonRepresentation
 	CREATED;
 
 
-	@Override
+	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation values) {
 		return values.put(CcpHttpStatus.class.getSimpleName(), this);
 	}

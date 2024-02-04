@@ -4,7 +4,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 
 class SourceHandler implements  java.util.function.Function<CcpJsonRepresentation, CcpJsonRepresentation>{
 
-	@Override
+	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation x) {
 		
 		CcpJsonRepresentation error = x.getInnerJson("error");
