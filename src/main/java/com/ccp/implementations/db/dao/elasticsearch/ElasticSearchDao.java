@@ -19,15 +19,15 @@ import com.ccp.exceptions.process.CcpThrowException;
 
 class ElasticSearchDao implements CcpDao {
 
-	private final SourceHandler mgetHandler = new SourceHandler();
 
 	private List<CcpJsonRepresentation> extractListFromMgetResponse(CcpJsonRepresentation requestBody) {
 	
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
 		CcpJsonRepresentation response = dbUtils.executeHttpRequest("/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
 		
-		List<CcpJsonRepresentation> docs = response.getJsonList("docs");
-		List<CcpJsonRepresentation> collect = docs.stream().map(x -> this.mgetHandler.apply(x)).collect(Collectors.toList());
+		List<CcpJsonRepresentation> docs = response.getAsJsonList("docs");
+		SourceHandler mgetHandler = new SourceHandler(requestBody);
+		List<CcpJsonRepresentation> collect = docs.stream().map(x -> mgetHandler.apply(x)).collect(Collectors.toList());
 		return collect;
 	}
 
