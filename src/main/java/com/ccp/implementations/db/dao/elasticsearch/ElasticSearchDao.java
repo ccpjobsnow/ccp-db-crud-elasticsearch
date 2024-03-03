@@ -2,7 +2,10 @@ package com.ccp.implementations.db.dao.elasticsearch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpConstants;
@@ -10,43 +13,72 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.dao.CcpDao;
+import com.ccp.especifications.db.dao.CcpDaoUnionAll;
 import com.ccp.especifications.db.utils.CcpDbRequester;
 import com.ccp.especifications.db.utils.CcpEntityIdGenerator;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.db.CcpEntityRecordNotFound;
-import com.ccp.exceptions.db.CcpEntityMissingKeys;
 import com.ccp.exceptions.process.CcpThrowException;
 
 class ElasticSearchDao implements CcpDao {
 
 
-	private List<CcpJsonRepresentation> extractListFromMgetResponse(CcpJsonRepresentation requestBody) {
-	
-		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpJsonRepresentation response = dbUtils.executeHttpRequest("/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
-		
-		List<CcpJsonRepresentation> docs = response.getAsJsonList("docs");
-		SourceHandler mgetHandler = new SourceHandler(requestBody);
-		List<CcpJsonRepresentation> collect = docs.stream().map(x -> mgetHandler.apply(x)).collect(Collectors.toList());
+	public List<CcpJsonRepresentation> getManyByIds(Function<CcpJsonRepresentation, CcpJsonRepresentation> mgetHandler, Collection<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {
+		CcpJsonRepresentation requestBody = this.getRequestBodyToMultipleGet(values, entities);
+		List<CcpJsonRepresentation> collect = this.getResponseToMultipleGet(mgetHandler, requestBody);
 		return collect;
 	}
 
+	public List<CcpJsonRepresentation> getManyByIds(Function<CcpJsonRepresentation, CcpJsonRepresentation> mgetHandler, Set<String> values, CcpEntityIdGenerator... entities) {
+		CcpJsonRepresentation requestBody = this.getRequestBodyToMultipleGet(values, entities);
+		List<CcpJsonRepresentation> collect = this.getResponseToMultipleGet(mgetHandler, requestBody);
+		return collect;
+	}
+
+	public List<CcpJsonRepresentation> getResponseToMultipleGet(Function<CcpJsonRepresentation, CcpJsonRepresentation> mgetHandler, CcpJsonRepresentation requestBody) {
+		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest("/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
+		List<CcpJsonRepresentation> docs = response.getAsJsonList("docs");
+		List<CcpJsonRepresentation> collect = docs.stream().map(mgetHandler).collect(Collectors.toList());
+		return collect;
+	}
+
+	public CcpJsonRepresentation getRequestBodyToMultipleGet(Collection<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {
+		List<CcpJsonRepresentation> docs1 = new ArrayList<CcpJsonRepresentation>();
+		for (CcpEntityIdGenerator entity : entities) {
+			String entidade = entity.name();
+			for (CcpJsonRepresentation value : values) {
+				String id = entity.getId(value);
+				CcpJsonRepresentation put = CcpConstants.EMPTY_JSON
+				.put("_id", id)
+				.put("_index", entidade);
+				docs1.add(put);
+			}
+		}
+		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs1);
+		return requestBody;
+	}
+
+	public CcpJsonRepresentation getRequestBodyToMultipleGet(Set<String> ids, CcpEntityIdGenerator... entities) {
+		List<CcpJsonRepresentation> docs1 = new ArrayList<CcpJsonRepresentation>();
+		for (CcpEntityIdGenerator entity : entities) {
+			String entidade = entity.name();
+			for (String id : ids) {
+				CcpJsonRepresentation put = CcpConstants.EMPTY_JSON
+				.put("_id", id)
+				.put("_index", entidade);
+				docs1.add(put);
+			}
+		}
+		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs1);
+		return requestBody;
+	}
 	
 	public List<CcpJsonRepresentation> getManyById(CcpJsonRepresentation values, CcpEntityIdGenerator... entities) {
 
-		List<CcpJsonRepresentation> asList = Arrays.asList(entities).stream().map(
-				entity -> {
-					String id = entity.getId(values);
-					String entidade = entity.name();
-					return CcpConstants.EMPTY_JSON
-					.put("_id", id)
-					.put("_index", entidade);
-				})
-				.collect(Collectors.toList());
-		
-		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", asList);
-		
-		List<CcpJsonRepresentation> asMapList = this.extractListFromMgetResponse(requestBody);
+		SourceHandler mgetHandler = new SourceHandler(values);
+		List<CcpJsonRepresentation> asList = Arrays.asList(values);
+		List<CcpJsonRepresentation> asMapList = this.getManyByIds(mgetHandler, asList, entities);
 		
 		return asMapList;
 	}
@@ -76,9 +108,12 @@ class ElasticSearchDao implements CcpDao {
 	
 	public List<CcpJsonRepresentation> getManyByIds(CcpEntityIdGenerator entity, String... ids) {
 	
-		List<String> asList = Arrays.asList(ids);
-		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("ids", asList);
-		List<CcpJsonRepresentation> asMapList = this.extractListFromMgetResponse(requestBody);
+		SourceHandler mgetHandler = new SourceHandler(CcpConstants.EMPTY_JSON);
+		List<CcpJsonRepresentation> asList = Arrays.asList(ids).stream()
+				.map(id -> CcpConstants.EMPTY_JSON.put("id", id))
+				.collect(Collectors.toList());
+		List<CcpJsonRepresentation> asMapList = this.getManyByIds(mgetHandler, asList, entity);
+		
 		return asMapList;
 	}
 
@@ -138,9 +173,11 @@ class ElasticSearchDao implements CcpDao {
 	
 	public CcpJsonRepresentation getAllData(CcpJsonRepresentation values, CcpEntityIdGenerator... entities) {
 		
-		CcpJsonRepresentation requestBody = this.getRequestBody(values, entities);
+		SourceHandler mgetHandler = new SourceHandler(values);
+		List<CcpJsonRepresentation> asList = Arrays.asList(values);
+		List<CcpJsonRepresentation> results = this.getManyByIds(mgetHandler, asList, entities);
 		
-		List<CcpJsonRepresentation> results = this.extractListFromMgetResponse(requestBody);
+//		return asMapList;
 
 		CcpJsonRepresentation response = this.extractResponse(results);
 
@@ -161,43 +198,31 @@ class ElasticSearchDao implements CcpDao {
 		return response;
 	}
 
-	private CcpJsonRepresentation getRequestBody(CcpJsonRepresentation values, CcpEntityIdGenerator... entities) {
-		List<CcpJsonRepresentation> docs = new ArrayList<>();
-		for (CcpEntityIdGenerator entity : entities) {
-			try {
-				String id = entity.getId(values);
-				CcpJsonRepresentation doc = CcpConstants.EMPTY_JSON.put("_id", id).put("_index", entity.name());
-				docs.add(doc);
-			} catch (CcpEntityMissingKeys e) {
-				continue;
-			}
-		}
-		
-		if(docs.isEmpty()) {
-			return CcpConstants.EMPTY_JSON;
-		}
-		
-		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs);
-		return requestBody;
-	}
 	
 	public List<CcpJsonRepresentation> getManyById(List<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {
-		List<CcpJsonRepresentation> docs = new ArrayList<CcpJsonRepresentation>();
-		for (CcpEntityIdGenerator entity : entities) {
-			String entidade = entity.name();
-			for (CcpJsonRepresentation value : values) {
-				String id = entity.getId(value);
-				CcpJsonRepresentation put = CcpConstants.EMPTY_JSON
-				.put("_id", id)
-				.put("_index", entidade);
-				docs.add(put);
-			}
-		}
-		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs);
 		
-		List<CcpJsonRepresentation> asMapList = this.extractListFromMgetResponse(requestBody);
+		SourceHandler mgetHandler = new SourceHandler(CcpConstants.EMPTY_JSON);
+	
+		List<CcpJsonRepresentation> asMapList = this.getManyByIds(mgetHandler, values, entities);
+		
 		List<CcpJsonRepresentation> collect = asMapList.stream().filter(x -> x.getAsBoolean("_found")).map(x -> x.removeKeys("_found", "_index")).collect(Collectors.toList());
+		
 		return collect;
+	}
+
+
+	public CcpDaoUnionAll unionAll(Collection<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {
+		SourceHandler mgetHandler = new SourceHandler(CcpConstants.EMPTY_JSON);
+		List<CcpJsonRepresentation> asMapList = this.getManyByIds(mgetHandler, values, entities);
+		CcpDaoUnionAll ccpDaoUnionAll = new CcpDaoUnionAll(asMapList);
+		return ccpDaoUnionAll;
+	}
+	@Override
+	public CcpDaoUnionAll unionAll(Set<String> values, CcpEntityIdGenerator... entities) {
+		SourceHandler mgetHandler = new SourceHandler(CcpConstants.EMPTY_JSON);
+		List<CcpJsonRepresentation> asMapList = this.getManyByIds(mgetHandler, values, entities);
+		CcpDaoUnionAll ccpDaoUnionAll = new CcpDaoUnionAll(asMapList);
+		return ccpDaoUnionAll;
 	}
 
 }

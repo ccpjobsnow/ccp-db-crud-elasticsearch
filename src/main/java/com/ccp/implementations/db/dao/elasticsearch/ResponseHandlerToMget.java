@@ -1,8 +1,10 @@
 package com.ccp.implementations.db.dao.elasticsearch;
 
+import java.util.function.Function;
+
 import com.ccp.decorators.CcpJsonRepresentation;
 
-class SourceHandler implements  java.util.function.Function<CcpJsonRepresentation, CcpJsonRepresentation>{
+class SourceHandler implements  Function<CcpJsonRepresentation, CcpJsonRepresentation>{
 	private final CcpJsonRepresentation originalQuery;
 	
 	public SourceHandler(CcpJsonRepresentation originalQuery) {
@@ -22,13 +24,15 @@ class SourceHandler implements  java.util.function.Function<CcpJsonRepresentatio
 		}
 
 		CcpJsonRepresentation internalMap = x.getInnerJson("_source");
+		
 		Boolean found = x.getAsBoolean("found");
-		String id = x.getAsString("_id");
 		String _index = x.getAsString("_index");
+		String id = x.getAsString("_id");
+
 		CcpJsonRepresentation put = internalMap.put("id", id)
-				.put("_found", found)
-				.put("_index", _index)
 				.put("_originalQuery", this.originalQuery)
+				.put("_index", _index)
+				.put("_found", found)
 				;
 		
 		return put;
