@@ -50,8 +50,9 @@ class ElasticSearchDao implements CcpDao {
 			for (CcpJsonRepresentation value : values) {
 				String id = entity.getId(value);
 				CcpJsonRepresentation put = CcpConstants.EMPTY_JSON
+				.put("_index", entidade)
 				.put("_id", id)
-				.put("_index", entidade);
+				;
 				docs1.add(put);
 			}
 		}
