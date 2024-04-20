@@ -1,11 +1,12 @@
 package com.ccp.implementations.db.dao.elasticsearch;
 
 import com.ccp.dependency.injection.CcpInstanceProvider;
+import com.ccp.especifications.db.dao.CcpDao;
 
-public class CcpElasticSearchDao implements CcpInstanceProvider  {
+public class CcpElasticSearchDao implements CcpInstanceProvider<CcpDao>  {
 
 	
-	public Object getInstance() {
+	public CcpDao getInstance() {
 		return new ElasticSearchDao();
 	}
 
