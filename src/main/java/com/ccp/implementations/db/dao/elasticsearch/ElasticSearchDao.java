@@ -46,7 +46,7 @@ class ElasticSearchDao implements CcpDao {
 	public CcpJsonRepresentation getRequestBodyToMultipleGet(Collection<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {
 		List<CcpJsonRepresentation> docs1 = new ArrayList<CcpJsonRepresentation>();
 		for (CcpEntityIdGenerator entity : entities) {
-			String entidade = entity.name();
+			String entidade = entity.getEntityName();
 			for (CcpJsonRepresentation value : values) {
 				String id = entity.getId(value);
 				CcpJsonRepresentation put = CcpConstants.EMPTY_JSON
@@ -63,7 +63,7 @@ class ElasticSearchDao implements CcpDao {
 	public CcpJsonRepresentation getRequestBodyToMultipleGet(Set<String> ids, CcpEntityIdGenerator... entities) {
 		List<CcpJsonRepresentation> docs1 = new ArrayList<CcpJsonRepresentation>();
 		for (CcpEntityIdGenerator entity : entities) {
-			String entidade = entity.name();
+			String entidade = entity.getEntityName();
 			for (String id : ids) {
 				CcpJsonRepresentation put = CcpConstants.EMPTY_JSON
 				.put("_id", id)
@@ -98,7 +98,7 @@ class ElasticSearchDao implements CcpDao {
 	public CcpJsonRepresentation getOneById(CcpEntityIdGenerator entity, String id) {
 		String path = "/" + entity + "/_source/" + id ;
 		
-		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_NOTHING).put("404", new CcpThrowException(new CcpEntityRecordNotFound(entity.name(), id)));
+		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_NOTHING).put("404", new CcpThrowException(new CcpEntityRecordNotFound(entity.getEntityName(), id)));
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
 		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getOneById", path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
