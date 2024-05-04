@@ -13,7 +13,7 @@ import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.crud.CcpCrud;
-import com.ccp.especifications.db.crud.CcpDaoUnionAll;
+import com.ccp.especifications.db.crud.CcpSelectUnionAll;
 import com.ccp.especifications.db.utils.CcpDbRequester;
 import com.ccp.especifications.db.utils.CcpEntityIdGenerator;
 import com.ccp.especifications.http.CcpHttpResponseType;
@@ -212,18 +212,18 @@ class ElasticSearchCrud implements CcpCrud {
 	}
 
 
-	public CcpDaoUnionAll unionAll(Collection<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {
+	public CcpSelectUnionAll unionAll(Collection<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {
 		SourceHandler mgetHandler = new SourceHandler(CcpConstants.EMPTY_JSON);
 		List<CcpJsonRepresentation> asMapList = this.getManyByIds(mgetHandler, values, entities);
-		CcpDaoUnionAll ccpDaoUnionAll = new CcpDaoUnionAll(asMapList);
-		return ccpDaoUnionAll;
+		CcpSelectUnionAll ccpSelectUnionAll = new CcpSelectUnionAll(asMapList);
+		return ccpSelectUnionAll;
 	}
 	@Override
-	public CcpDaoUnionAll unionAll(Set<String> values, CcpEntityIdGenerator... entities) {
+	public CcpSelectUnionAll unionAll(Set<String> values, CcpEntityIdGenerator... entities) {
 		SourceHandler mgetHandler = new SourceHandler(CcpConstants.EMPTY_JSON);
 		List<CcpJsonRepresentation> asMapList = this.getManyByIds(mgetHandler, values, entities);
-		CcpDaoUnionAll ccpDaoUnionAll = new CcpDaoUnionAll(asMapList);
-		return ccpDaoUnionAll;
+		CcpSelectUnionAll ccpSelectUnionAll = new CcpSelectUnionAll(asMapList);
+		return ccpSelectUnionAll;
 	}
 
 }
