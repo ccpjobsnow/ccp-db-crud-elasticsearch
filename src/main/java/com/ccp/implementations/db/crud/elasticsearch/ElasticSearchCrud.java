@@ -1,4 +1,4 @@
-package com.ccp.implementations.db.dao.elasticsearch;
+package com.ccp.implementations.db.crud.elasticsearch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,15 +12,15 @@ import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpJsonRepresentation;
 import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.dependency.injection.CcpDependencyInjection;
-import com.ccp.especifications.db.dao.CcpDao;
-import com.ccp.especifications.db.dao.CcpDaoUnionAll;
+import com.ccp.especifications.db.crud.CcpCrud;
+import com.ccp.especifications.db.crud.CcpDaoUnionAll;
 import com.ccp.especifications.db.utils.CcpDbRequester;
 import com.ccp.especifications.db.utils.CcpEntityIdGenerator;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.db.CcpEntityRecordNotFound;
 import com.ccp.exceptions.process.CcpThrowException;
 
-class ElasticSearchDao implements CcpDao {
+class ElasticSearchCrud implements CcpCrud {
 
 
 	public List<CcpJsonRepresentation> getManyByIds(Function<CcpJsonRepresentation, CcpJsonRepresentation> mgetHandler, Collection<CcpJsonRepresentation> values, CcpEntityIdGenerator... entities) {

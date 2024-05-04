@@ -1,5 +1,5 @@
 
-package com.ccp.implementations.db.dao.elasticsearch;
+package com.ccp.implementations.db.crud.elasticsearch;
 
 
 import java.util.function.Function;
