@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.ccp.constantes.CcpConstants;
@@ -21,19 +20,6 @@ import com.ccp.exceptions.process.CcpThrowException;
 
 class ElasticSearchCrud implements CcpCrud {
 
-	public List<CcpJsonRepresentation> getManyByIds(Function<CcpJsonRepresentation, CcpJsonRepresentation> mgetHandler, Set<String> values, CcpEntity... entities) {
-		CcpJsonRepresentation requestBody = this.getRequestBodyToMultipleGet(values, entities);
-		List<CcpJsonRepresentation> collect = this.getResponseToMultipleGet(mgetHandler, requestBody);
-		return collect;
-	}
-
-	public List<CcpJsonRepresentation> getResponseToMultipleGet(Function<CcpJsonRepresentation, CcpJsonRepresentation> mgetHandler, CcpJsonRepresentation requestBody) {
-		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getResponseToMultipleGet", "/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
-		List<CcpJsonRepresentation> docs = response.getAsJsonList("docs");
-		List<CcpJsonRepresentation> collect = docs.stream().map(mgetHandler).collect(Collectors.toList());
-		return collect;
-	}
 
 	public CcpJsonRepresentation getRequestBodyToMultipleGet(Collection<CcpJsonRepresentation> values, CcpEntity... entities) {
 		List<CcpJsonRepresentation> docs1 = new ArrayList<CcpJsonRepresentation>();
@@ -80,7 +66,8 @@ class ElasticSearchCrud implements CcpCrud {
 	public CcpJsonRepresentation getOneById(CcpEntity entity, String id) {
 		String path = "/" + entity + "/_source/" + id ;
 		
-		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_BY_PASS).put("404", new CcpThrowException(new CcpEntityRecordNotFound(entity.getEntityName(), id)));
+		String entityName = entity.getEntityName();
+		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_BY_PASS).put("404", new CcpThrowException(new CcpEntityRecordNotFound(entityName, id)));
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
 		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getOneById", path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
@@ -141,9 +128,12 @@ class ElasticSearchCrud implements CcpCrud {
 	}
 
 	public CcpSelectUnionAll unionAll(Collection<CcpJsonRepresentation> values, CcpEntity... entities) {
-		SourceHandler mgetHandler = new SourceHandler(CcpConstants.EMPTY_JSON);
+		SourceHandler mgetHandler = new SourceHandler();
 		CcpJsonRepresentation requestBody = this.getRequestBodyToMultipleGet(values, entities);
-		List<CcpJsonRepresentation> asMapList = this.getResponseToMultipleGet(mgetHandler, requestBody);
+		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getResponseToMultipleGet", "/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
+		List<CcpJsonRepresentation> docs = response.getAsJsonList("docs");
+		List<CcpJsonRepresentation> asMapList = docs.stream().map(mgetHandler).collect(Collectors.toList());
 		CcpSelectUnionAll ccpSelectUnionAll = new CcpSelectUnionAll(asMapList);
 		return ccpSelectUnionAll;
 	}
