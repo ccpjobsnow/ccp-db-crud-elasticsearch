@@ -96,13 +96,13 @@ class ElasticSearchCrud implements CcpCrud {
 	public boolean exists(CcpEntity entity, String id) {
 		String path = "/" + entity + "/_doc/" + id;
 		
-		CcpJsonRepresentation flows = CcpConstants.EMPTY_JSON.put("200", CcpHttpStatus.OK).put("404",  CcpHttpStatus.NOT_FOUND);
+		CcpJsonRepresentation flows = CcpConstants.EMPTY_JSON.put("200", ElasticSearchHttpStatus.OK).put("404",  ElasticSearchHttpStatus.NOT_FOUND);
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
 		CcpJsonRepresentation response = dbUtils.executeHttpRequest("exists", path, "HEAD", flows, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
-		CcpHttpStatus status = response.getAsObject(CcpHttpStatus.class.getSimpleName());
+		ElasticSearchHttpStatus status = response.getAsObject(ElasticSearchHttpStatus.class.getSimpleName());
 		
-		boolean exists = CcpHttpStatus.OK.equals(status);
+		boolean exists = ElasticSearchHttpStatus.OK.equals(status);
 		return exists;
 	}
 
@@ -120,8 +120,8 @@ class ElasticSearchCrud implements CcpCrud {
 		
 		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON
 				.put("409", values -> this.retryCreateOrUpdate(entity, data, id))
-				.put("201",  CcpHttpStatus.CREATED)
-				.put("200", CcpHttpStatus.OK)
+				.put("201",  ElasticSearchHttpStatus.CREATED)
+				.put("200", ElasticSearchHttpStatus.OK)
 				;
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
@@ -167,16 +167,3 @@ class ElasticSearchCrud implements CcpCrud {
 	}
 
 }
-enum CcpHttpStatus implements  java.util.function.Function<CcpJsonRepresentation, CcpJsonRepresentation>{
-	OK,
-	NOT_FOUND, 
-	CREATED;
-
-
-	
-	public CcpJsonRepresentation apply(CcpJsonRepresentation values) {
-		return values.put(CcpHttpStatus.class.getSimpleName(), this);
-	}
-	
-}
-
