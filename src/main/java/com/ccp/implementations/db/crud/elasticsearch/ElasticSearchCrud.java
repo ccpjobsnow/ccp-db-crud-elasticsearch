@@ -26,6 +26,15 @@ class ElasticSearchCrud implements CcpCrud {
 		for (CcpEntity entity : entities) {
 			String entidade = entity.getEntityName();
 			for (CcpJsonRepresentation value : values) {
+				
+				List<String> primaryKeyNames = entity.getPrimaryKeyNames();
+				
+				boolean anyKeyIsMissing = value.containsAllKeys(primaryKeyNames) == false;
+				
+				if(anyKeyIsMissing) {
+					continue;
+				}
+				
 				String id = entity.getId(value);
 				CcpJsonRepresentation put = this.getParameterToSearch(entidade, id);
 				docs1.add(put);
