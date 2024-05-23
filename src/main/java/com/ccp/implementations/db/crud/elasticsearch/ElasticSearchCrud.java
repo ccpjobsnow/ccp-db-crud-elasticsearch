@@ -171,7 +171,7 @@ class ElasticSearchCrud implements CcpCrud {
 		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getResponseToMultipleGet", "/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
 		List<CcpJsonRepresentation> docs = response.getAsJsonList("docs");
 		List<CcpJsonRepresentation> asMapList = docs.stream().map(mgetHandler).collect(Collectors.toList());
-		CcpSelectUnionAll ccpSelectUnionAll = new CcpSelectUnionAll(asMapList);
+		CcpSelectUnionAll ccpSelectUnionAll = new CcpSelectUnionAll(asMapList, requestBody);
 		return ccpSelectUnionAll;
 	}
 
