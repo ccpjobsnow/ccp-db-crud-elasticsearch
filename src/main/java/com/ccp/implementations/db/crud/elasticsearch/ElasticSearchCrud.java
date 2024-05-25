@@ -20,51 +20,27 @@ import com.ccp.exceptions.process.CcpThrowException;
 
 class ElasticSearchCrud implements CcpCrud {
 
-
-	private CcpJsonRepresentation getRequestBodyToMultipleGet(Collection<CcpJsonRepresentation> values, CcpEntity... entities) {
+	private CcpJsonRepresentation getRequestBodyToMultipleGet(Collection<CcpJsonRepresentation> jsons, CcpEntity... entities) {
 		List<CcpJsonRepresentation> docs1 = new ArrayList<CcpJsonRepresentation>();
 		for (CcpEntity entity : entities) {
-			String entidade = entity.getEntityName();
-			for (CcpJsonRepresentation value : values) {
+			
+			for (CcpJsonRepresentation json : jsons) {
 				
 				List<String> primaryKeyNames = entity.getPrimaryKeyNames();
 				
-				boolean anyKeyIsMissing = value.containsAllKeys(primaryKeyNames) == false;
+				boolean anyKeyIsMissing = json.containsAllKeys(primaryKeyNames) == false;
 				
 				if(anyKeyIsMissing) {
 					continue;
 				}
-				
-				String id = entity.getId(value);
-				CcpJsonRepresentation put = this.getParameterToSearch(entidade, id);
-				docs1.add(put);
+				List<CcpJsonRepresentation> parametersToSearch = entity.getParametersToSearch(json);
+				docs1.addAll(parametersToSearch);
 			}
 		}
 		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs1);
 		return requestBody;
 	}
 	
-	private CcpJsonRepresentation getRequestBodyToMultipleGet(List<String> ids, CcpEntity... entities) {
-		List<CcpJsonRepresentation> docs1 = new ArrayList<CcpJsonRepresentation>();
-		for (CcpEntity entity : entities) {
-			String entidade = entity.getEntityName();
-			for (String id : ids) {
-				CcpJsonRepresentation put = this.getParameterToSearch(entidade, id);
-				docs1.add(put);
-			}
-		}
-		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs1);
-		return requestBody;
-	}
-
-	private CcpJsonRepresentation getParameterToSearch(String entidade, String id) {
-		CcpJsonRepresentation put = CcpConstants.EMPTY_JSON
-		.put("_index", entidade)
-		.put("_id", id)
-		;
-		return put;
-	}
-
 	public CcpJsonRepresentation getRequestBodyToMultipleGet(Set<String> ids, CcpEntity... entities) {
 		List<CcpJsonRepresentation> docs1 = new ArrayList<CcpJsonRepresentation>();
 		for (CcpEntity entity : entities) {
@@ -89,7 +65,6 @@ class ElasticSearchCrud implements CcpCrud {
 		return oneById;
 	}
 
-	
 	public CcpJsonRepresentation getOneById(CcpEntity entity, String id) {
 		String path = "/" + entity + "/_source/" + id ;
 		
@@ -115,7 +90,6 @@ class ElasticSearchCrud implements CcpCrud {
 		return exists;
 	}
 
-	
 	public CcpJsonRepresentation createOrUpdate(CcpEntity entity, CcpJsonRepresentation data, String id) {
 		CcpJsonRepresentation onlyExistingFields = entity.getOnlyExistingFields(data);
 		String path = "/" + entity + "/_update/" + id;
@@ -143,7 +117,6 @@ class ElasticSearchCrud implements CcpCrud {
 		return this.createOrUpdate(entity, data, id);
 	}
 
-	
 	public boolean delete(CcpEntity entity, String id) {
 		String path = "/" + entity + "/_doc/" + id;
 		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_BY_PASS).put("404", CcpConstants.DO_BY_PASS);
@@ -153,12 +126,7 @@ class ElasticSearchCrud implements CcpCrud {
 		boolean found = "deleted".equals( result);
 		return found;
 	}
-	public CcpSelectUnionAll unionAll(List<String> ids, CcpEntity... entities) {
-		CcpJsonRepresentation requestBody = this.getRequestBodyToMultipleGet(ids, entities);
-		CcpSelectUnionAll ccpSelectUnionAll = this.unionAll(requestBody);
-		return ccpSelectUnionAll;
-	}
-
+	
 	public CcpSelectUnionAll unionAll(Collection<CcpJsonRepresentation> values, CcpEntity... entities) {
 		CcpJsonRepresentation requestBody = this.getRequestBodyToMultipleGet(values, entities);
 		CcpSelectUnionAll ccpSelectUnionAll = this.unionAll(requestBody);
@@ -171,8 +139,7 @@ class ElasticSearchCrud implements CcpCrud {
 		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getResponseToMultipleGet", "/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
 		List<CcpJsonRepresentation> docs = response.getAsJsonList("docs");
 		List<CcpJsonRepresentation> asMapList = docs.stream().map(mgetHandler).collect(Collectors.toList());
-		CcpSelectUnionAll ccpSelectUnionAll = new CcpSelectUnionAll(asMapList, requestBody);
+		CcpSelectUnionAll ccpSelectUnionAll = new CcpSelectUnionAll(asMapList);
 		return ccpSelectUnionAll;
 	}
-
 }
