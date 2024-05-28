@@ -56,9 +56,9 @@ class ElasticSearchCrud implements CcpCrud {
 		return requestBody;
 	}
 	
-	public CcpJsonRepresentation getOneById(CcpEntity entity, CcpJsonRepresentation values) {
+	public CcpJsonRepresentation getOneById(CcpEntity entity, CcpJsonRepresentation json) {
 	
-		String id = entity.getId(values);
+		String id = entity.calculateId(json);
 		
 		CcpJsonRepresentation oneById = this.getOneById(entity, id);
 		
@@ -90,8 +90,8 @@ class ElasticSearchCrud implements CcpCrud {
 		return exists;
 	}
 
-	public CcpJsonRepresentation createOrUpdate(CcpEntity entity, CcpJsonRepresentation data, String id) {
-		CcpJsonRepresentation onlyExistingFields = entity.getOnlyExistingFields(data);
+	public CcpJsonRepresentation createOrUpdate(CcpEntity entity, CcpJsonRepresentation json, String id) {
+		CcpJsonRepresentation onlyExistingFields = entity.getOnlyExistingFields(json);
 		String path = "/" + entity + "/_update/" + id;
 		
 		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON
@@ -102,7 +102,7 @@ class ElasticSearchCrud implements CcpCrud {
 				;
 		
 		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON
-				.put("409", values -> this.retryCreateOrUpdate(entity, data, id))
+				.put("409", values -> this.retryCreateOrUpdate(entity, json, id))
 				.put("201",  ElasticSearchHttpStatus.CREATED)
 				.put("200", ElasticSearchHttpStatus.OK)
 				;
@@ -112,9 +112,9 @@ class ElasticSearchCrud implements CcpCrud {
 		return response;
 	}
 
-	private CcpJsonRepresentation retryCreateOrUpdate(CcpEntity entity, CcpJsonRepresentation data, String id) {
+	private CcpJsonRepresentation retryCreateOrUpdate(CcpEntity entity, CcpJsonRepresentation json, String id) {
 		new CcpTimeDecorator().sleep(1000);
-		return this.createOrUpdate(entity, data, id);
+		return this.createOrUpdate(entity, json, id);
 	}
 
 	public boolean delete(CcpEntity entity, String id) {
