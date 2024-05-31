@@ -69,7 +69,7 @@ class ElasticSearchCrud implements CcpCrud {
 		String path = "/" + entity + "/_source/" + id ;
 		
 		String entityName = entity.getEntityName();
-		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_BY_PASS).put("404", new CcpThrowException(new CcpEntityRecordNotFound(entityName, id)));
+		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_NOTHING).put("404", new CcpThrowException(new CcpEntityRecordNotFound(entityName, id)));
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
 		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getOneById", path, "GET", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
@@ -119,7 +119,7 @@ class ElasticSearchCrud implements CcpCrud {
 
 	public boolean delete(CcpEntity entity, String id) {
 		String path = "/" + entity + "/_doc/" + id;
-		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_BY_PASS).put("404", CcpConstants.DO_BY_PASS);
+		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.put("200", CcpConstants.DO_NOTHING).put("404", CcpConstants.DO_NOTHING);
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
 		CcpJsonRepresentation response = dbUtils.executeHttpRequest("delete", path, "DELETE", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		String result = response.getAsString("result");
