@@ -95,9 +95,9 @@ class ElasticSearchCrud implements CcpCrud {
 		String path = "/" + entity + "/_update/" + id;
 		
 		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON
-				.putSubKey("script", "lang", "painless")
-				.putSubKey("script", "source", "ctx._source.putAll(params);")
-				.putSubKey("script", "params", onlyExistingFields)
+				.addToItem("script", "lang", "painless")
+				.addToItem("script", "source", "ctx._source.putAll(params);")
+				.addToItem("script", "params", onlyExistingFields)
 				.put("upsert", onlyExistingFields)
 				;
 		
