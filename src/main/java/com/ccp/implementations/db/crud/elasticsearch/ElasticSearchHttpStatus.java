@@ -12,7 +12,7 @@ public enum ElasticSearchHttpStatus implements  Function<CcpJsonRepresentation, 
 
 	
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
-		CcpJsonRepresentation put = json.put(ElasticSearchHttpStatus.class.getSimpleName(), this);
+		CcpJsonRepresentation put = json.addJsonTransformer(ElasticSearchHttpStatus.class.getSimpleName(), this);
 		return put;
 	}
 	
