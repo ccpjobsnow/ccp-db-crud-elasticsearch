@@ -1,6 +1,7 @@
 package com.ccp.implementations.db.crud.elasticsearch;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -21,7 +22,7 @@ import com.ccp.exceptions.process.CcpThrowException;
 class ElasticSearchCrud implements CcpCrud {
 
 	private CcpJsonRepresentation getRequestBodyToMultipleGet(Collection<CcpJsonRepresentation> jsons, CcpEntity... entities) {
-		List<CcpJsonRepresentation> docs1 = new ArrayList<CcpJsonRepresentation>();
+		List<CcpJsonRepresentation> docs = new ArrayList<CcpJsonRepresentation>();
 		for (CcpEntity entity : entities) {
 			
 			for (CcpJsonRepresentation json : jsons) {
@@ -34,10 +35,17 @@ class ElasticSearchCrud implements CcpCrud {
 					continue;
 				}
 				List<CcpJsonRepresentation> parametersToSearch = entity.getParametersToSearch(json);
-				docs1.addAll(parametersToSearch);
+				docs.addAll(parametersToSearch);
 			}
 		}
-		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs1);
+		
+		boolean idsNotFound = docs.isEmpty();
+	
+		if(idsNotFound) {
+			throw new RuntimeException(String.format(" Ids not found in the values %s  to the entities '%s' ", jsons, Arrays.asList(entities)));
+		}
+		
+		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON.put("docs", docs);
 		return requestBody;
 	}
 	
