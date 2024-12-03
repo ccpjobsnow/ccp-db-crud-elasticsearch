@@ -22,7 +22,9 @@ import com.ccp.exceptions.process.CcpThrowException;
 class ElasticSearchCrud implements CcpCrud {
 
 	private CcpJsonRepresentation getRequestBodyToMultipleGet(Collection<CcpJsonRepresentation> jsons, CcpEntity... entities) {
+		
 		List<CcpJsonRepresentation> docs = new ArrayList<CcpJsonRepresentation>();
+		
 		for (CcpEntity entity : entities) {
 			
 			for (CcpJsonRepresentation json : jsons) {
@@ -34,6 +36,7 @@ class ElasticSearchCrud implements CcpCrud {
 				if(anyKeyIsMissing) {
 					continue;
 				}
+
 				List<CcpJsonRepresentation> parametersToSearch = entity.getParametersToSearch(json);
 				docs.addAll(parametersToSearch);
 			}
@@ -55,8 +58,9 @@ class ElasticSearchCrud implements CcpCrud {
 			String entidade = entity.getEntityName();
 			for (String id : ids) {
 				CcpJsonRepresentation put = CcpConstants.EMPTY_JSON
+				.put("_index", entidade)
 				.put("_id", id)
-				.put("_index", entidade);
+				;
 				docs1.add(put);
 			}
 		}

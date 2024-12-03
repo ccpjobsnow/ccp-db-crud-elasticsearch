@@ -11,9 +11,9 @@ class SourceHandler implements  Function<CcpJsonRepresentation, CcpJsonRepresent
 	public SourceHandler() {
 	}
 
-	public CcpJsonRepresentation apply(CcpJsonRepresentation x) {
+	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
-		CcpJsonRepresentation error = x.getInnerJson("error");
+		CcpJsonRepresentation error = json.getInnerJson("error");
 		
 		boolean hasError = error.isEmpty() == false;
 		
@@ -23,10 +23,10 @@ class SourceHandler implements  Function<CcpJsonRepresentation, CcpJsonRepresent
 			throw new RuntimeException(errorType + ". Reason: " + reason);
 		}
 
-		CcpJsonRepresentation internalMap = x.getInnerJson("_source");
+		CcpJsonRepresentation internalMap = json.getInnerJson("_source");
 		
-		String _index = x.getAsString("_index");
-		String id = x.getAsString("_id");
+		String _index = json.getAsString("_index");
+		String id = json.getAsString("_id");
 
 		CcpJsonRepresentation put = internalMap
 				.put("_id", id)
