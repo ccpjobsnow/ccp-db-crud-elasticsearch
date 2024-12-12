@@ -29,7 +29,7 @@ class ElasticSearchCrud implements CcpCrud {
 			
 			for (CcpJsonRepresentation json : jsons) {
 				
-				List<String> primaryKeyNames = entity.getPrimaryKeyNames();
+ 				List<String> primaryKeyNames = entity.getPrimaryKeyNames();
 				
 				boolean anyKeyIsMissing = json.containsAllFields(primaryKeyNames) == false;
 				
