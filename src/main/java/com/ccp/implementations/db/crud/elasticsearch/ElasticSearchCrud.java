@@ -13,13 +13,14 @@ import com.ccp.decorators.CcpTimeDecorator;
 import com.ccp.dependency.injection.CcpDependencyInjection;
 import com.ccp.especifications.db.crud.CcpCrud;
 import com.ccp.especifications.db.crud.CcpSelectUnionAll;
+import com.ccp.especifications.db.crud.CcpUnionAllExecutor;
 import com.ccp.especifications.db.utils.CcpDbRequester;
 import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.db.CcpEntityRecordNotFound;
 import com.ccp.exceptions.process.CcpThrowException;
 
-class ElasticSearchCrud implements CcpCrud {
+class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 
 	private CcpJsonRepresentation getRequestBodyToMultipleGet(Collection<CcpJsonRepresentation> jsons, CcpEntity... entities) {
 		
@@ -154,4 +155,9 @@ class ElasticSearchCrud implements CcpCrud {
 		CcpSelectUnionAll ccpSelectUnionAll = new CcpSelectUnionAll(asMapList);
 		return ccpSelectUnionAll;
 	}
+
+	public CcpUnionAllExecutor getUnionAllExecutor() {
+		return this;
+	}
+
 }
