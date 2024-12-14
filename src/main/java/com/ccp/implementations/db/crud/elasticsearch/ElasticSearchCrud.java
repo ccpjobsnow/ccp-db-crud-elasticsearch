@@ -69,19 +69,9 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 		return requestBody;
 	}
 	
-	public CcpJsonRepresentation getOneById(CcpEntity entity, CcpJsonRepresentation json) {
-	
-		String id = entity.calculateId(json);
+	public CcpJsonRepresentation getOneById(String entityName, String id) {
+		String path = "/" + entityName + "/_source/" + id ;
 		
-		CcpJsonRepresentation oneById = this.getOneById(entity, id);
-		
-		return oneById;
-	}
-
-	public CcpJsonRepresentation getOneById(CcpEntity entity, String id) {
-		String path = "/" + entity + "/_source/" + id ;
-		
-		String entityName = entity.getEntityName();
 		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.addJsonTransformer("200", CcpConstants.DO_NOTHING).addJsonTransformer("404", new CcpThrowException(new CcpEntityRecordNotFound(entityName, id)));
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
@@ -90,8 +80,8 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 		return response;
 	}
 
-	public boolean exists(CcpEntity entity, String id) {
-		String path = "/" + entity + "/_doc/" + id;
+	public boolean exists(String entityName, String id) {
+		String path = "/" + entityName + "/_doc/" + id;
 		
 		CcpJsonRepresentation flows = CcpConstants.EMPTY_JSON.addJsonTransformer("200", ElasticSearchHttpStatus.OK).addJsonTransformer("404",  ElasticSearchHttpStatus.NOT_FOUND);
 		
@@ -103,19 +93,18 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 		return exists;
 	}
 
-	public CcpJsonRepresentation createOrUpdate(CcpEntity entity, CcpJsonRepresentation json, String id) {
-		CcpJsonRepresentation onlyExistingFields = entity.getOnlyExistingFields(json);
-		String path = "/" + entity + "/_update/" + id;
+	public CcpJsonRepresentation createOrUpdate(String entityName, CcpJsonRepresentation json, String id) {
+		String path = "/" + entityName + "/_update/" + id;
 		
 		CcpJsonRepresentation requestBody = CcpConstants.EMPTY_JSON
 				.addToItem("script", "lang", "painless")
 				.addToItem("script", "source", "ctx._source.putAll(params);")
-				.addToItem("script", "params", onlyExistingFields)
-				.put("upsert", onlyExistingFields)
+				.addToItem("script", "params", json)
+				.put("upsert", json)
 				;
 		
 		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON
-				.addJsonTransformer("409", values -> this.retryCreateOrUpdate(entity, json, id))
+				.addJsonTransformer("409", values -> this.retryCreateOrUpdate(entityName, json, id))
 				.addJsonTransformer("201",  ElasticSearchHttpStatus.CREATED)
 				.addJsonTransformer("200", ElasticSearchHttpStatus.OK)
 				;
@@ -125,13 +114,14 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 		return response;
 	}
 
-	private CcpJsonRepresentation retryCreateOrUpdate(CcpEntity entity, CcpJsonRepresentation json, String id) {
+	private CcpJsonRepresentation retryCreateOrUpdate(String entityName, CcpJsonRepresentation json, String id) {
 		new CcpTimeDecorator().sleep(1000);
-		return this.createOrUpdate(entity, json, id);
+		CcpJsonRepresentation createOrUpdate = this.createOrUpdate(entityName, json, id);
+		return createOrUpdate;
 	}
 
-	public boolean delete(CcpEntity entity, String id) {
-		String path = "/" + entity + "/_doc/" + id;
+	public boolean delete(String entityName, String id) {
+		String path = "/" + entityName + "/_doc/" + id;
 		CcpJsonRepresentation handlers = CcpConstants.EMPTY_JSON.addJsonTransformer("200", CcpConstants.DO_NOTHING).addJsonTransformer("404", CcpConstants.DO_NOTHING);
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
 		CcpJsonRepresentation response = dbUtils.executeHttpRequest("delete", path, "DELETE", handlers, CcpConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
@@ -159,5 +149,4 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 	public CcpUnionAllExecutor getUnionAllExecutor() {
 		return this;
 	}
-
 }
