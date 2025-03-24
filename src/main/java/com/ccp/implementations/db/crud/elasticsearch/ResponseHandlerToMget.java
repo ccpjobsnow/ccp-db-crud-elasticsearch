@@ -5,11 +5,13 @@ package com.ccp.implementations.db.crud.elasticsearch;
 import java.util.function.Function;
 
 import com.ccp.decorators.CcpJsonRepresentation;
+import com.ccp.exceptions.db.crud.CcpMultiGetSearchFailed;
 
-class SourceHandler implements  Function<CcpJsonRepresentation, CcpJsonRepresentation>{
+class ResponseHandlerToMget implements Function<CcpJsonRepresentation, CcpJsonRepresentation>{
 	
-	public SourceHandler() {
-	}
+	static ResponseHandlerToMget INSTANCE = new ResponseHandlerToMget();
+	
+	private ResponseHandlerToMget() {}
 
 	public CcpJsonRepresentation apply(CcpJsonRepresentation json) {
 		
@@ -18,9 +20,7 @@ class SourceHandler implements  Function<CcpJsonRepresentation, CcpJsonRepresent
 		boolean hasError = error.isEmpty() == false;
 		
 		if(hasError) {
-			String errorType = error.getAsString("type");
-			String reason = error.getAsString("reason");
-			throw new RuntimeException(errorType + ". Reason: " + reason);
+			throw new CcpMultiGetSearchFailed(error);
 		}
 
 		CcpJsonRepresentation internalMap = json.getInnerJson("_source");

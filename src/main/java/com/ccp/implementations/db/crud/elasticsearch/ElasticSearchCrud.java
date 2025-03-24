@@ -1,7 +1,6 @@
 package com.ccp.implementations.db.crud.elasticsearch;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -17,8 +16,10 @@ import com.ccp.especifications.db.crud.CcpUnionAllExecutor;
 import com.ccp.especifications.db.utils.CcpDbRequester;
 import com.ccp.especifications.db.utils.CcpEntity;
 import com.ccp.especifications.http.CcpHttpResponseType;
-import com.ccp.exceptions.db.CcpEntityRecordNotFound;
-import com.ccp.exceptions.process.CcpThrowException;
+import com.ccp.exceptions.db.crud.CcpMultiGetSearchUnfeasible;
+import com.ccp.exceptions.db.utils.CcpEntityRecordNotFound;
+import com.ccp.http.CcpHttpMethods;
+import com.ccp.process.CcpThrowException;
 
 class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 
@@ -43,10 +44,10 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 			}
 		}
 		
-		boolean idsNotFound = docs.isEmpty();
+		boolean unfeasibleMultiGetSearch = docs.isEmpty();
 	
-		if(idsNotFound) {
-			throw new RuntimeException(String.format(" Ids not found in the values %s  to the entities '%s' ", jsons, Arrays.asList(entities)));
+		if(unfeasibleMultiGetSearch) {
+			throw new CcpMultiGetSearchUnfeasible(jsons, entities);
 		}
 		
 		CcpJsonRepresentation requestBody = CcpOtherConstants.EMPTY_JSON.put("docs", docs);
@@ -75,7 +76,7 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 		CcpJsonRepresentation handlers = CcpOtherConstants.EMPTY_JSON.addJsonTransformer("200", CcpOtherConstants.DO_NOTHING).addJsonTransformer("404", new CcpThrowException(new CcpEntityRecordNotFound(entityName, id)));
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getOneById", path, "GET", handlers, CcpOtherConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getOneById", path, CcpHttpMethods.GET, handlers, CcpOtherConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		
 		return response;
 	}
@@ -86,7 +87,7 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 		CcpJsonRepresentation flows = CcpOtherConstants.EMPTY_JSON.addJsonTransformer("200", ElasticSearchHttpStatus.OK).addJsonTransformer("404",  ElasticSearchHttpStatus.NOT_FOUND);
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpJsonRepresentation response = dbUtils.executeHttpRequest("exists", path, "HEAD", flows, CcpOtherConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest("exists", path, CcpHttpMethods.HEAD, flows, CcpOtherConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		ElasticSearchHttpStatus status = response.getAsObject(ElasticSearchHttpStatus.class.getSimpleName());
 		
 		boolean exists = ElasticSearchHttpStatus.OK.equals(status);
@@ -110,7 +111,7 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 				;
 		
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpJsonRepresentation response = dbUtils.executeHttpRequest("createOrUpdate", path, "POST", handlers, requestBody, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest("createOrUpdate", path, CcpHttpMethods.POST, handlers, requestBody, CcpHttpResponseType.singleRecord);
 		return response;
 	}
 
@@ -124,7 +125,7 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 		String path = "/" + entityName + "/_doc/" + id;
 		CcpJsonRepresentation handlers = CcpOtherConstants.EMPTY_JSON.addJsonTransformer("200", CcpOtherConstants.DO_NOTHING).addJsonTransformer("404", CcpOtherConstants.DO_NOTHING);
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpJsonRepresentation response = dbUtils.executeHttpRequest("delete", path, "DELETE", handlers, CcpOtherConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest("delete", path, CcpHttpMethods.DELETE, handlers, CcpOtherConstants.EMPTY_JSON, CcpHttpResponseType.singleRecord);
 		String result = response.getAsString("result");
 		boolean found = "deleted".equals( result);
 		return found;
@@ -137,11 +138,10 @@ class ElasticSearchCrud implements CcpCrud, CcpUnionAllExecutor {
 	}
 
 	private CcpSelectUnionAll unionAll(CcpJsonRepresentation requestBody) {
-		SourceHandler mgetHandler = new SourceHandler();
 		CcpDbRequester dbUtils = CcpDependencyInjection.getDependency(CcpDbRequester.class);
-		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getResponseToMultipleGet", "/_mget", "POST", 200, requestBody, CcpHttpResponseType.singleRecord);
+		CcpJsonRepresentation response = dbUtils.executeHttpRequest("getResponseToMultipleGet", "/_mget", CcpHttpMethods.POST, 200, requestBody, CcpHttpResponseType.singleRecord);
 		List<CcpJsonRepresentation> docs = response.getAsJsonList("docs");
-		List<CcpJsonRepresentation> asMapList = docs.stream().map(mgetHandler).collect(Collectors.toList());
+		List<CcpJsonRepresentation> asMapList = docs.stream().map(ResponseHandlerToMget.INSTANCE).collect(Collectors.toList());
 		CcpSelectUnionAll ccpSelectUnionAll = new CcpSelectUnionAll(asMapList);
 		return ccpSelectUnionAll;
 	}
